@@ -1,6 +1,7 @@
 package main
 
 import "testing"
+import "github.com/stretchr/testify/assert"
 
 func TestMangleCtor(t *testing.T) {
 	testcases := [][4]string{
@@ -11,10 +12,7 @@ func TestMangleCtor(t *testing.T) {
 	}
 
 	for _, tc := range testcases {
-		got := MangleCtorName(tc[0], tc[1], tc[2])
-		if got != tc[3] {
-			t.Error(got, tc)
-		}
+		assert.Equal(t, tc[3], MangleCtorName(tc[0], tc[1], tc[2]))
 	}
 }
 
@@ -28,9 +26,6 @@ func TestMangleDepType(t *testing.T) {
 	}
 
 	for _, tc := range testcases {
-		got := MangleDepTypeName(tc[0], tc[1], tc[2])
-		if got != tc[3] {
-			t.Error(got, tc)
-		}
+		assert.Equal(t, tc[3], MangleDepTypeName(tc[0], tc[1], tc[2]))
 	}
 }
