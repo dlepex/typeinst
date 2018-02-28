@@ -17,3 +17,7 @@ type _typeinst struct {
 	Ints    func(T int) indexof.Slice
 	Floats  func(T float64) (indexof.Slice, filter.Slice)
 }
+
+type E2 interface {
+	Less(E2) bool
+}

@@ -21,6 +21,7 @@ func MangleCtorName(orig, gen, inst string) string {
 	return StrEnsureCase(n, isUpper)
 }
 
+// "non-root generic types"
 // orig - original dependant type name, gen - "parent" type name, inst - instantiated "parent" type name
 func MangleDepTypeName(orig, gen, inst string) string {
 	n, isUpper := StrUpcase(orig)

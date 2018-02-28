@@ -14,16 +14,16 @@ import (
 )
 
 type (
-	// Impl - root structure, it aggregates all generic packages - it will be printed as a single implementation file (the result)
+	// Impl - root structure, it aggregates all generic packages - it will be printed as a single implementation file
 	Impl struct {
-		pkg       map[string]*PkgDesc
-		imports   Imports
-		instNames StrSet
-		pkgName   string // generated package name
-		filePath  string // generated file name
+		pkg        map[string]*PkgDesc
+		imports    Imports
+		instNames  StrSet
+		pkgName    string // generated package name
+		outputFile string // generated file name
 	}
 
-	// Generic package desc - all types, functions and everything to print-transform it
+	// Generic package desc - all types and their functions
 	PkgDesc struct {
 		name      string
 		types     map[string]*TypeDesc     // all package types by name
@@ -51,11 +51,11 @@ type (
 
 func NewImpl(outputFile, pkgName string) *Impl {
 	return &Impl{
-		pkg:       make(map[string]*PkgDesc),
-		imports:   Imports{},
-		instNames: NewStrSet(),
-		filePath:  outputFile,
-		pkgName:   pkgName,
+		pkg:        make(map[string]*PkgDesc),
+		imports:    Imports{},
+		instNames:  NewStrSet(),
+		outputFile: outputFile,
+		pkgName:    pkgName,
 	}
 }
 

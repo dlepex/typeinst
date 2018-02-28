@@ -26,7 +26,7 @@ func TestWriteFile(t *testing.T) {
 	ce(t, err)
 	pk1, err := impl.Package("github.com/dlepex/typeinst/testdata/g/slices/filter", Imports{})
 	ce(t, err)
-	impl.filePath = "/tmp/out.go"
+	impl.outputfile = "/tmp/out.go"
 	impl.pkgName = "testpkg"
 
 	err = pk.Inst("Map", "Dict", map[string]string{

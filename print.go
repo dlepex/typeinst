@@ -38,7 +38,7 @@ func (p *astPrinter) println(node interface{}) {
 }
 
 func (im *Impl) Print() error {
-	f, err := os.Create(im.filePath)
+	f, err := os.Create(im.outputFile)
 	if err != nil {
 		return err
 	}
