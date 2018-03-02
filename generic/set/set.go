@@ -1,18 +1,18 @@
 package set
 
-type T = interface{}
+type E = interface{}
 
-type Set map[T]struct{}
+type Set map[E]struct{}
 
-func NewSet() Set {
-	return make(map[T]struct{})
+func New() Set {
+	return make(map[E]struct{})
 }
 
-func (set Set) Add(v T) {
-	set[v] = struct{}{}
+func (set Set) Add(elem E) {
+	set[elem] = struct{}{}
 }
 
-func (set Set) Has(v T) bool {
-	_, has := set[v]
+func (set Set) Has(elem E) bool {
+	_, has := set[elem]
 	return has
 }

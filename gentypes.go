@@ -8,6 +8,6 @@ import (
 
 //go:generate typeinst
 type _typeinst struct {
-	StrSet      func(T string) set.Set
-	AstIdentSet func(T *ast.Ident) set.Set
+	StrSet      func(E string) set.Set
+	AstIdentSet func(E *ast.Ident) set.Set
 }
