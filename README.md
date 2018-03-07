@@ -44,7 +44,7 @@ type A = interface{} // Alias is the preferred form.
 type B interface{} // This form is possible too but it may be less convenient than the alias-based if you want to use a generic package directly i.e. w/o typeinst.
 
 type C interface { // Non-empty interface type variables can be used as well.
-	Less(C) bool     // Type variable C can only be substituted by types having "Less(Self)" method.
+	Less(C) bool     // Type variable C can only be substituted by types having `Less()` method.
 }
 ```
 
@@ -103,6 +103,7 @@ __Avoid non-generic code in generic package__, move it to separate non-generic p
 Non-generic code includes:
 - free-standing functions that are not constructors of generic types
 - non-generic types
+- vars and consts decl
 
 #### Type merging
 
@@ -147,7 +148,6 @@ type _typeinst struct {
 
 - [ ] alternative dsl form: func(tv1-type, tv1-value, tv2-type, tv2-value,...)
 - [ ] more tests & travis cfg
-
 
 
 
