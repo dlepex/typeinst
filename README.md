@@ -1,7 +1,7 @@
 # __Typeinst__
-Typeinst is a codegen tool to automate the creation of concrete types ("type instances") based generic/"templated" types.
+Typeinst is a codegen tool to automate the creation of concrete types ("type instances") based generic/"template" types.
 
-Typeinst uses a "magic", fake struct (DSL-struct, for brevity) declaration as the description of what types should be created:
+Typeinst uses  special fake struct declaration (DSL-struct, for brevity)  as the description of what types should be created:
 ```go
 import (
 	"some-fictional-generic-package1/redblack"
@@ -14,16 +14,16 @@ type _typeinst struct {
 	StrSet		func(E string)  std.Set
 } 
 ```
-Each field of DSL-struct defines the single concrete.
+Each field of DSL-struct defines the single concrete type.
 
-DSL-func describes the substitution of type variables, which happens by name, and the result of DSL-func is the generic type where this substitution takes place.
+For each field *DSL-func* describes the substitution of type variables, which happens by name, and the result of DSL-func is the generic type where this substitution takes place.
 
 ## __Usage__
 
 Typeinst is to be used with `go generate`, it has no command line options: it uses DSL-struct as its sole "option".
 
 1. Install the tool first: `go install github.com/dlepex/typeinst`
-1. Declare DSL-struct in some file of your package, together with go-generate comment, as in example above.
+1. Declare DSL-struct in some file of your package, together with go-generate comment, as in the example above.
 	* The DSL-struct name must start with `_typeinst` prefix, it is strongly recommended to have one DSL-struct per package, and to declare it in a separate file.
 1. Run `go generate` on your package.
 1. The result is `<file>_ti.go`, where `<file>` is a name of the file where DSL-struct is declared. The file is generated in the same package and it contains ALL concrete types described by DSL-struct.
