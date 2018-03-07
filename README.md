@@ -1,5 +1,5 @@
 # __Typeinst__
-Typeinst is a tool to automate the creation of concrete types ("type instances") based generic/template types.
+Typeinst is a tool to automate the creation of concrete types ("type instances") from generic/"template" types.
 
 Typeinst uses the special fake struct declaration (DSL-struct, for brevity)  as the description of what types should be generated:
 ```go
@@ -16,7 +16,7 @@ type _typeinst struct {
 ```
 Each field of DSL-struct defines the single concrete type.
 
-For each field *DSL-func* describes the substitution of type variables, which happens by name, and the result of DSL-func is the generic type where this substitution takes place.
+For each field *DSL-func* describes the substitution of type variables and the result of DSL-func is the generic type where this substitution takes place. The substitution is done by name.
 
 ## __Usage__
 
