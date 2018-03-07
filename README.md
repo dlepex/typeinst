@@ -64,21 +64,21 @@ Type is considered generic if one or more type variables are [reachable](#reacha
 
 Generic type `G` consists of:
 - type declaration 
-- member functions, i.e. functions with receiver `G` or `*G`
+- methods (functions with receiver `G` or `*G`)
 - *constructor functions*
 
 
 *Root generic types* are the types that are explicitly instantiated (i.e. the results of DSL-funcs)
 
-*Non-root generic types* are *reachable* from root types and need to be "implicitly" instantiated (and implicitly named). For instance, root type AVLTree requires non-root type AVLTreeNode.
+*Non-root generic types* are [reachable](#reachability) from root types, they are implicitly instantiated (and implicitly named). For instance, root hypothetical root type `AVLTree` requires non-root type `AVLTreeNode`.
 
-If you don't like the implicit ("mangled") names of non-root types, you can always name them on your own by making them root-types i.e. add their explicit instantiation to DSL-struct.
+If you do not like the implicit ("mangled") names of non-root types, you can always name them on your own by making them root, i.e. by adding their explicit instantiation to DSL-struct.
 
 #### Constructor function
 
-Constructor functions of generic type `G` is a  free-standing (no receiver) function that returns:
+Constructor function of generic type `G` is function (no receiver) that returns:
 - `G`, `*G`, `[]G`, `[n]G`
-- or any _two_ levels of those: `**G`, `*[42]G`, but not: `[]*[]G`.
+- or any _two_ levels of those: `**G`, `*[42]G`, but not: `[]*[]G`
 - in case of multiple return values: only the first return var is checked.
 
 
@@ -88,7 +88,7 @@ Constructor functions usually have names started with `New`, but this is not enf
 
 Type B is directly reachable from type A if it occurs in:
 - type A declaration
-- signatures of type A member or constructor functions (bodies are not scanned!)
+- signatures of type A methods or constructor functions (bodies are not scanned)
 
 Reachability is a transitive, non-symmetric relation.
 
@@ -101,23 +101,26 @@ Generic package may import other packages. However, imported packages are never 
 __Avoid non-generic code in generic package__, move it to separate non-generic package if needed.
 
 Non-generic code includes:
-- free-standing functions that are not constructors of generic types
-- non-generic types
-- vars and consts decl
+- functions, excluding constructors of generic types 
+- non-generic types and their methods
+- var and const declarations
 
 #### Type merging
 
-Type merging allows assembling a concrete type from multiple orthogonal behavioral parts. 
+Type merging allows an instantiated type to be assembled from multiple orthogonal behavioral parts
 
-Partial types must be structurally the same i.e. have the same type expr after substitution. Note that typeinst does not check this property, your generated code simply will not compile if it is violated.
+"Behavioral parts" must have the same type after substitution of type variables.
 
 ```go
 type T = interface{} 
-type SliceF T[] // this type implements filtering "methods"
-type SliceA T[] // and this - aggregation "methods" (it may be declared in another generic package)
+type SliceF T[] // this type implements some filtering "methods"
+func (a SliceF) Filter(...) ... {...}
+
+type SliceA T[] // and this - aggregation "methods": it may be declared in another generic package, with another (differently named) type variable.
+func (a SliceA) Reduce(...) ... {...}
 ```
 
-The merged type `IntSlice`  based on these two behavioral sub-units may be created using multiple return types in DSL-func:
+The merged type `IntSlice`  based on these two behavioral subunits may be created using multiple return types in DSL-func:
 
 ```go
 //go:generate typeinst
