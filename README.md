@@ -70,7 +70,7 @@ Generic type `G` consists of:
 
 *Root generic types* are the types that are explicitly instantiated (i.e. the results of DSL-funcs)
 
-*Non-root generic types* are [reachable](#reachability) from root types, they are implicitly instantiated (and implicitly named). For instance, root hypothetical root type `AVLTree` requires non-root type `AVLTreeNode`.
+*Non-root generic types* are [reachable](#reachability) from root types, they are implicitly instantiated (and implicitly named). For instance, hypothetical root type `AVLTree` requires non-root type `AVLTreeNode`.
 
 If you do not like the implicit ("mangled") names of non-root types, you can always name them on your own by making them root, i.e. by adding their explicit instantiation to DSL-struct.
 
@@ -144,8 +144,8 @@ type _typeinst struct {
 
 ## __Implementation notes__
 
-- AST rewriting is not used. "Rewriting" happens simultaneously with printing AST to file. For that purpose, the standard "go/printer" package was slightly modified: "RenameFunc" was added to Config, it has 1 call site. 
-- Typeinst has been used to generate its own piece: see "gentypes.go" file.
+- AST rewriting is not used. Identifier substitution happens simultaneously with printing AST to file. For that purpose, the standard "go/printer" package was slightly modified: extra field `RenameFunc` was added to the `Config` struct.
+- Typeinst has been used to generate a part of itself: [🌀 gentypes.go](https://github.com/dlepex/typeinst/blob/master/gentypes.go)
 
 ## todo
 
