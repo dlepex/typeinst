@@ -106,25 +106,25 @@ Non-generic code includes:
 
 #### Type merging
 
-Type merging allows assembling type from multiple orthogonal behavioural parts. 
+Type merging allows assembling a concrete type from multiple orthogonal behavioural parts. 
 
-Partial types must be structurally the same i.e. have the same type expr after substitution. Note that typeinst does not check this property, your generated code simply will not compile.
+Partial types must be structurally the same i.e. have the same type expr after substitution. Note that typeinst does not check this property, your generated code simply will not compile if it is violated.
 
 ```go
 type T = interface{} 
-type SliceF T[] // this type lets say implements filtering "methods"
-type SliceA T[] // this type defines aggregation "methods" (it may be declared in another generic package)
+type SliceF T[] // this type implements filtering "methods"
+type SliceA T[] // and this - aggregation "methods" (it may be declared in another generic package)
 ```
 
-Merged type based on these two behavioral sub-units may be created using multiple return types in DSL-func:
+The merged type `IntSlice`  based on these two behavioral sub-units may be created using multiple return types in DSL-func:
 
 ```go
 //go:generate typeinst
 type _typeinst struct {
-	MergedIntSlice	func(T int) (somepkg.SliceA, somepkg.SliceF)
+	IntSlice	func(T int) (somepkg.SliceA, somepkg.SliceF)
 } 
 ```
-
+`IntSlice` will contain both filtering and aggregation methods.
 
 ## __Limitations__
 
@@ -134,7 +134,7 @@ type _typeinst struct {
 2. Type variables cannot be substituted by:
 	- "anonimous" non-empty struct [solution: use named types or type alias]
 	- "anonimous" non-empty interface [solution: the same]
-3. Typeinst is type-based so free standing functions (except constructors) cannot be generic. [solution: use functions with receiver instead, ultimately "singleton" types can be used as dummy receivers]
+3. Typeinst is type-based and so free standing functions (except constructors) cannot be generic. [solution: use functions with receiver instead, ultimately empty(`struct{}`) named types can be used as dummy receivers].
 4. [Read generic package section](#generic-package)
 
 
