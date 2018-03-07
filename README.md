@@ -142,7 +142,7 @@ type _typeinst struct {
 ## __Implementation notes__
 
 - AST rewriting is not used. "Rewriting" happens simultaneously with printing AST to file. For that purpose, the standard "go/printer" package was slightly modified: "RenameFunc" was added to Config, it has 1 call site. 
-- Typeisnt has been used to generate its own piece: see "gentypes.go" file.
+- Typeinst has been used to generate its own piece: see "gentypes.go" file.
 
 ## todo
 
