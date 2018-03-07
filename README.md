@@ -30,8 +30,8 @@ Typeinst is to be used with `go generate`, it has no command line options: it us
 
 ## __Features__
 - __Selective type instantiation__: Typeinst will only create the required *generic types*, not the whole generic package at once. 
-- *Constructor functions* support
-- *Type merging* support
+- [Constructor functions](#constructor-function) support
+- [Type merging](#type-merging) support
 - The implementer of a generic package doesn't need to use any special comments or magic imports. Generic package is a rather normal package, where some types (or type aliases) serve as type variables.
 
 ## __Terminology__
