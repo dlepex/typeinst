@@ -106,6 +106,25 @@ Non-generic code includes:
 
 #### Type merging
 
+Type merging allows assembling type from multiple orthogonal behavioural parts. 
+
+Partial types must be structurally the same i.e. have the same type expr after substitution. Note that typeinst does not check this property, your generated code simply will not compile.
+
+```go
+type T = interface{} 
+type SliceF T[] // this type lets say implements filtering "methods"
+type SliceA T[] // this type defines aggregation "methods" (it may be declared in another generic package)
+```
+
+Merged type based on these two behavioral sub-units may be created using multiple return types in DSL-func:
+
+```go
+//go:generate typeinst
+type _typeinst struct {
+	MergedIntSlice	func(T int) (somepkg.SliceA, somepkg.SliceF)
+} 
+```
+
 
 ## __Limitations__
 
