@@ -1,7 +1,7 @@
 # __Typeinst__
-Typeinst is a codegen tool to automate the creation of concrete types ("type instances") based generic/"template" types.
+Typeinst is a tool to automate the creation of concrete types ("type instances") based generic/template types.
 
-Typeinst uses  special fake struct declaration (DSL-struct, for brevity)  as the description of what types should be created:
+Typeinst uses the special fake struct declaration (DSL-struct, for brevity)  as the description of what types should be generated:
 ```go
 import (
 	"some-fictional-generic-package1/redblack"
@@ -64,13 +64,13 @@ Type is considered generic if one or more type variables are [reachable](#reacha
 
 Generic type `G` consists of:
 - type declaration 
-- memeber functions, i.e. functions with receiver `G` or `*G`
+- member functions, i.e. functions with receiver `G` or `*G`
 - *constructor functions*
 
 
 *Root generic types* are the types that are explicitly instantiated (i.e. the results of DSL-funcs)
 
-*Non-root generic types* are *reachable* from root types and need to be "implicitly" instantiated (and implictily named). For instance, root type AVLTree requires non-root type AVLTreeNode.
+*Non-root generic types* are *reachable* from root types and need to be "implicitly" instantiated (and implicitly named). For instance, root type AVLTree requires non-root type AVLTreeNode.
 
 If you don't like the implicit ("mangled") names of non-root types, you can always name them on your own by making them root-types i.e. add their explicit instantiation to DSL-struct.
 
@@ -107,7 +107,7 @@ Non-generic code includes:
 
 #### Type merging
 
-Type merging allows assembling a concrete type from multiple orthogonal behavioural parts. 
+Type merging allows assembling a concrete type from multiple orthogonal behavioral parts. 
 
 Partial types must be structurally the same i.e. have the same type expr after substitution. Note that typeinst does not check this property, your generated code simply will not compile if it is violated.
 
@@ -133,8 +133,8 @@ type _typeinst struct {
 	- must have consistent import names across all files of the same generic package 
 	- dot `.` import is not allowed
 2. Type variables cannot be substituted by:
-	- "anonimous" non-empty struct [solution: use named types or type alias]
-	- "anonimous" non-empty interface [solution: the same]
+	- "anonymous" non-empty struct [solution: use named types or type alias]
+	- "anonymous" non-empty interface [solution: the same]
 3. Typeinst is type-based and so free standing functions (except constructors) cannot be generic. [solution: use functions with receiver instead, ultimately empty(`struct{}`) named types can be used as dummy receivers].
 4. [Read generic package section](#generic-package)
 
