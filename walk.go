@@ -40,8 +40,8 @@ type (
 
 	TypeDesc struct {
 		spec     *ast.TypeSpec
-		funcs    []*ast.FuncDecl      // funcs are member functions (i.e. with receiver equal to this type or pointer to it)
-		ctors    []*ast.FuncDecl      // ctor is free standing func (w/o receiver), returning instances of: G,[]G,*G,**G,...(any two levels of * or []) where G is generic type (root or "dependant")
+		methods  []*ast.FuncDecl
+		ctors    []*ast.FuncDecl      // ctor is func w/o receiver, returning instances of: G,[]G,*G,**G,...(any two levels of * or []) where G is generic type (root or "dependant")
 		inst     map[*TypeArgs]string // typeargs -> instname; (map nonempty only for generic types)
 		typevars StrSet               // set is populated typevars upon which this generic type depends
 		typevar  bool                 // does this type serves as a typevar?
@@ -60,7 +60,7 @@ func NewImpl(outputFile, pkgName string) *Impl {
 }
 
 func (td *TypeDesc) String() string {
-	return fmt.Sprintf("{fn: %v, cc: %v, t: %v}", td.funcs, td.ctors, td.typevar)
+	return fmt.Sprintf("{fn: %v, cc: %v, t: %v}", td.methods, td.ctors, td.typevar)
 }
 
 func (td *TypeDesc) name() string {
@@ -71,7 +71,7 @@ func (td *TypeDesc) addFunc(f *ast.FuncDecl) {
 	if td.typevar {
 		log.Fatalf("Typevar %s can't be func receiver: %s", td.name(), f.Name.Name)
 	}
-	td.funcs = append(td.funcs, f)
+	td.methods = append(td.methods, f)
 }
 
 func (td *TypeDesc) addCtor(f *ast.FuncDecl) {
@@ -88,7 +88,7 @@ func (td *TypeDesc) initBinds() {
 }
 
 func (td *TypeDesc) canBeTypevar() bool {
-	return len(td.ctors) == 0 && len(td.funcs) == 0
+	return len(td.ctors) == 0 && len(td.methods) == 0
 }
 
 func (t *TypeDesc) IsGeneric() bool { return len(t.typevars) != 0 }
@@ -432,7 +432,7 @@ func (pk *PkgDesc) walkType(t *TypeDesc, vf func(astWalkerParams)) {
 
 	ast.Walk(reach, t.spec.Type)
 
-	for _, f := range t.funcs {
+	for _, f := range t.methods {
 		ast.Walk(reach, f.Type)
 	}
 
@@ -445,7 +445,7 @@ func (pk *PkgDesc) walkTypeMarkOcc(t *TypeDesc) {
 	var mark astWalker = pk.markOccurences
 	ast.Walk(mark, t.spec.Type)
 	pk.occTypes.Add(t.spec.Name)
-	for _, f := range t.funcs {
+	for _, f := range t.methods {
 		ast.Walk(mark, f.Type)
 		ast.Walk(mark, f.Body)
 		ast.Walk(mark, f.Recv)

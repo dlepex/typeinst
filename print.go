@@ -110,7 +110,7 @@ func (pk *PkgDesc) print(wr *bufio.Writer, typedefs StrSet) {
 						p.println(f)
 					}
 				}
-				for _, f := range tp.funcs {
+				for _, f := range tp.methods {
 					p.println(f)
 				}
 			}

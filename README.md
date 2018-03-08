@@ -56,7 +56,7 @@ type E = interface{} //typeinst: typevar
 ```
 This comment only provides better error messages, in case a user of your generic package omits a type variable in DSL-func. 
 
-Please note that, if the "typevar"-comment was used for one type variable - it MUST be used for all of them (in the same generic package, of course).
+Please note that, if the "typevar"-comment was used for one type variable, it MUST be used for the rest of them (in the same generic package).
 
 #### Generic type
 
@@ -96,31 +96,31 @@ Reachability is a transitive, non-symmetric relation.
 
 *Generic package* contains *generic types* and their *type variables*. 
 
-Generic package may import other packages. However, imported packages are never treated as "generic" themselves.
-
-__Avoid non-generic code in generic package__, move it to separate non-generic package if needed.
+__Generic packages cannot contain non-generic code__, move it to separate non-generic package if needed.
 
 Non-generic code includes:
-- functions, excluding constructors of generic types 
+- functions (w/o receiver), excluding constructors of generic types 
 - non-generic types and their methods
 - var and const declarations
 
+Generic package may import other packages. However, imported packages are never treated as generic themselves.
+
 #### Type merging
 
-Type merging allows an instantiated type to be assembled from multiple orthogonal behavioral parts
+Type merging allows an instantiated type to be assembled from multiple orthogonal behavioral parts.
 
 "Behavioral parts" must have the same type after substitution of type variables.
 
 ```go
 type T = interface{} 
-type SliceF T[] // this type implements some filtering "methods"
+type SliceF T[] // this type has filtering methods
 func (a SliceF) Filter(...) ... {...}
 
-type SliceA T[] // and this - aggregation "methods": it may be declared in another generic package, with another (differently named) type variable.
+type SliceA T[] // and this - aggregation methods: it may be declared in another generic package, with another (differently named) type variable.
 func (a SliceA) Reduce(...) ... {...}
 ```
 
-The merged type `IntSlice`  based on these two behavioral subunits may be created using multiple return types in DSL-func:
+The merged type `IntSlice` based on this 2 types may be created using multiple return types in DSL-func:
 
 ```go
 //go:generate typeinst
@@ -138,8 +138,12 @@ type _typeinst struct {
 2. Type variables cannot be substituted by:
 	- "anonymous" non-empty struct [solution: use named types or type alias]
 	- "anonymous" non-empty interface [solution: the same]
-3. Typeinst is type-based and so free standing functions (except constructors) cannot be generic. [solution: use functions with receiver instead, ultimately empty(`struct{}`) named types can be used as dummy receivers].
+3. Functions w/o receiver (except constructors) cannot be generic. [solution: use methods instead; ultimately generic types based on empty struct can be used as dummy receivers].
 4. [Read generic package section](#generic-package)
+5. Not all errors are checked during code generation, some of them will potentially result in uncompilable code: 
+	- non generic code in generic package
+	- merging unmergeable types
+	- identifier name clashes
 
 
 ## __Implementation notes__

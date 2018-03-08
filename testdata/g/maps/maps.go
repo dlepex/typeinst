@@ -16,13 +16,6 @@ func (m Map) KeyValues(keys *[]K, values *[]V) {
 	}
 }
 
-type Node struct {
-	key  K
-	val  V
-	h    int
-	next **Node
-}
-
 type TreeMap struct {
 	l   *Node
 	r   *Node
@@ -39,4 +32,8 @@ func create(keys []K, values []V) *TreeMap {
 
 func (t *TreeMap) Put(k K, v V) {
 
+}
+
+func makeWrappers() []*wrapper {
+	return nil
 }

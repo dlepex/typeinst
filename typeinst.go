@@ -14,8 +14,10 @@ import (
 const fileSuffix = "_ti"
 
 func main() {
-	fmt.Printf("typeinst: $GOPATH = %v\n", os.Getenv("GOPATH"))
+
 	gofile := os.Getenv("GOFILE")
+	fmt.Printf("$GOPATH = %v\n$GOFILE = %v\n", os.Getenv("GOPATH"), gofile)
+
 	implFile := implFilename(gofile, fileSuffix)
 
 	dsl, err := ParseDSL(gofile, "")
