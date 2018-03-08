@@ -26,3 +26,4 @@ _testmain.go
 *.pprof
 *.out
 *.log
+testdata/**/*_ti.go
