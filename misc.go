@@ -76,7 +76,8 @@ type localErr struct {
 	error
 }
 
-// recoverTo is to be used with defer()
+// recoverTo recovers local panics
+// Public funcs must use it to catch localPanic(): defer recoverTo(&err)
 func recoverTo(pe *error) {
 	r := recover()
 	if r == nil {
@@ -89,14 +90,15 @@ func recoverTo(pe *error) {
 	}
 }
 
-func (e localErr) panic() {
-	panic(e)
-}
-
+// localPanic: Public func can't call this func without defer recoverTo()
 func localPanic(e error) {
 	if e != nil {
-		localErr{e}.panic()
+		panic(localErr{e})
 	}
+}
+
+func localPanicf(format string, a ...interface{}) {
+	localPanic(fmt.Errorf(format, a...))
 }
 
 func unquote(s string) string {

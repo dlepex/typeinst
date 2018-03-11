@@ -69,14 +69,14 @@ func (td *TypeDesc) name() string {
 
 func (td *TypeDesc) addFunc(f *ast.FuncDecl) {
 	if td.typevar {
-		log.Fatalf("Typevar %s can't be func receiver: %s", td.name(), f.Name.Name)
+		localPanicf("Typevar %s can't be func receiver: %s", td.name(), f.Name.Name)
 	}
 	td.methods = append(td.methods, f)
 }
 
 func (td *TypeDesc) addCtor(f *ast.FuncDecl) {
 	if td.typevar {
-		log.Fatalf("Typevar %s can't have constructors: %s", td.name(), f.Name.Name)
+		localPanicf("Typevar %s can't have constructors: %s", td.name(), f.Name.Name)
 	}
 	td.ctors = append(td.ctors, f)
 }
@@ -117,11 +117,11 @@ func (m tdescDict) get(name string) *TypeDesc {
 	}
 }
 
-func (impl *Impl) Package(pkgPath string, imports Imports) (*PkgDesc, error) {
+func (impl *Impl) Package(pkgPath string, imports Imports) (pkg *PkgDesc, err error) {
 	if p, ok := impl.pkg[pkgPath]; ok {
 		return p, nil
 	}
-
+	defer recoverTo(&err)
 	types := tdescDict(make(map[string]*TypeDesc))
 	funcs := make(map[string]*ast.FuncDecl)
 	tpvars := NewStrSet()
@@ -179,11 +179,11 @@ func (impl *Impl) Package(pkgPath string, imports Imports) (*PkgDesc, error) {
 		impRename = impl.imports.Merge(imports)
 	}
 
-	pkg := &PkgDesc{pkgPath, types, make(map[string]*TypeDesc), tpvars, NewStrSet(), funcs, impRename, len(tpvars) > 0,
+	pkg = &PkgDesc{pkgPath, types, make(map[string]*TypeDesc), tpvars, NewStrSet(), funcs, impRename, len(tpvars) > 0,
 		NewAstIdentSet(), NewAstIdentSet(), NewAstIdentSet()}
 	pkg.detectCtors()
 	impl.pkg[pkgPath] = pkg
-	return pkg, nil
+	return
 }
 
 func unpackTypeOrPtrType(t ast.Node) (name string, el ast.Node) {

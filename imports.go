@@ -126,10 +126,10 @@ func (im *Imports) Named(n string) string {
 	return im.n2p[n]
 }
 
-func (im *Imports) RequireNamed(n string) string {
+func (im *Imports) requireNamed(n string) string {
 	p := im.Named(n)
 	if p == "" {
-		localErr{dslErrorf("unresolved import named: %s", n)}.panic()
+		localPanicf("unresolved import named: %s", n)
 	}
 	return p
 }

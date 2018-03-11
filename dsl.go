@@ -49,43 +49,53 @@ func ParseDSL(filename, structName string) (dsl *DSL, err error) {
 
 	for _, spec := range f.Imports {
 		if err := imports.AddSpec(spec); err != nil {
-			return nil, dslErrorf("bad imports: %v", err)
+			return nil, fmt.Errorf("bad imports: %v", err)
 		}
 	}
 
 	stringer := astStringer{}
 
 	parseFunc := func(it *DSLItem, t *ast.FuncType) {
+
 		typeVarsPkgs := NewStrSet()
 		walker := pkgNameWalker(typeVarsPkgs)
+		estr := func(s string) string {
+			return s + " [in dsl-struct field: " + it.InstName + "]"
+		}
+		if t.Params == nil || len(t.Params.List) == 0 {
+			localPanicf(estr("dsl-func has no arguments i.e. typevar substitutions"))
+		}
+		if t.Results == nil || len(t.Results.List) == 0 {
+			localPanicf(estr("dsl-func has no result i.e. generic type"))
+		}
 		for _, field := range t.Params.List {
 			typeVar := fieldName(field)
 			if typeVar == "" {
-				localErr{dslErrorf("typevar param in func requires name")}.panic()
+				localPanicf(estr("typevar param in func requires name"))
 			}
 			ast.Walk(walker, field.Type)
 			it.TypeArgs[typeVar] = stringer.ToString(field.Type)
 		}
 
 		for pkgname, _ := range typeVarsPkgs {
-			dsl.Imports.Add(pkgname, imports.RequireNamed(pkgname))
+			dsl.Imports.Add(pkgname, imports.requireNamed(pkgname))
 		}
 
 		qtset := NewStrSet()
 		for _, field := range t.Results.List {
 			if len(field.Names) > 0 {
-				localErr{dslErrorf("function result cannot have field names")}.panic()
+				localPanicf(estr("dsl-func result cannot have field names"))
 			}
 			pair := parseGenericTypeExpr(field.Type)
 			if pair.PkgName == "" {
-				localErr{dslErrorf("generic type cannot be local - it must be imported from another package")}.panic()
+				localPanicf(estr("generic type cannot be local, it must be imported from another package"))
 			}
 			qt := pair.QualifiedType()
 			if qtset.Has(qt) {
-				localErr{dslErrorf("repeated generic type: %v", qt)}.panic()
+				localPanicf(estr("merging repeated generic type: %v"), qt)
 			}
 			qtset.Add(qt)
-			pair.PkgName = imports.RequireNamed(pair.PkgName)
+			pair.PkgName = imports.requireNamed(pair.PkgName)
 			it.GenericTypes = append(it.GenericTypes, pair)
 		}
 	}
@@ -93,10 +103,10 @@ func ParseDSL(filename, structName string) (dsl *DSL, err error) {
 	parseStruct := func(ts *ast.TypeSpec) {
 		expr, ok := ts.Type.(*ast.StructType)
 		if !ok {
-			localErr{dslErrorf("struct type expected")}.panic()
+			localPanicf("struct type expected")
 		}
 		if expr.Fields == nil || len(expr.Fields.List) == 0 {
-			localErr{dslErrorf("empty struct")}.panic()
+			localPanicf("empty struct")
 		}
 		for _, field := range expr.Fields.List {
 			it := &DSLItem{
@@ -105,8 +115,8 @@ func ParseDSL(filename, structName string) (dsl *DSL, err error) {
 			}
 			ft, ok := field.Type.(*ast.FuncType)
 			if !ok {
-				localErr{dslErrorf("struct fields must have func types, e.g: `func(K int, V string) MyMap`, found: field: %s type: %v ",
-					it.InstName, reflect.TypeOf(ts.Type))}.panic()
+				localPanicf("struct fields must have func types, e.g: `func(K int, V string) MyMap`, found: field: %s type: %v ",
+					it.InstName, reflect.TypeOf(ts.Type))
 			}
 			parseFunc(it, ft)
 			dsl.Items = append(dsl.Items, it)
@@ -127,18 +137,14 @@ func ParseDSL(filename, structName string) (dsl *DSL, err error) {
 			}
 		}
 	}
-	return nil, dslErrorf("delaration of dsl struct not found: %s", structName)
+	return nil, fmt.Errorf("delaration of dsl struct not found: %s", structName)
 }
 
 func fieldName(field *ast.Field) string {
 	if len(field.Names) != 1 {
-		localErr{dslErrorf("field must have one name in struct fields and func params/returns: %v", field.Names)}.panic()
+		localPanicf("field must have one name in struct fields and func params/returns: %v", field.Names)
 	}
 	return field.Names[0].Name
-}
-
-func dslErrorf(format string, args ...interface{}) error {
-	return fmt.Errorf("dsl: "+format, args...)
 }
 
 type astStringer struct {
@@ -182,7 +188,7 @@ func parseGenericTypeExpr(t ast.Expr) PkgTypePair {
 			return PkgTypePair{t.Name, typ}
 		}
 	}
-	localErr{dslErrorf("unexpected type expr for generic type: %v in expr: %v", reflect.TypeOf(t), t)}.panic()
+	localPanicf("unexpected type expr for generic type: %v in expr: %v", reflect.TypeOf(t), t)
 	return PkgTypePair{}
 }
 
