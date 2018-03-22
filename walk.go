@@ -41,7 +41,7 @@ type (
 	TypeDesc struct {
 		spec     *ast.TypeSpec
 		methods  []*ast.FuncDecl
-		ctors    []*ast.FuncDecl      // ctor is func w/o receiver, returning instances of: G,[]G,*G,**G,...(any two levels of * or []) where G is generic type (root or "dependant")
+		ctors    []*ast.FuncDecl      // constructor functions
 		inst     map[*TypeArgs]string // typeargs -> instname; (map nonempty only for generic types)
 		typevars StrSet               // set is populated typevars upon which this generic type depends
 		typevar  bool                 // does this type serves as a typevar?
