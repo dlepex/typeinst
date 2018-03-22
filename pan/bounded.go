@@ -8,7 +8,7 @@ import (
 )
 
 // Bounded simplifies the implemenetation of "internal" panic i.e. panic that doesn't cross package boundaries
-// The idea is that the public API of your package never leaks internal panics, see RecoverTo() & Panic() methods.
+// The idea is that the public API of your package never leaks internal panics, see RecoverTo() & Check() methods.
 type Bounded struct {
 	pkg string
 }
@@ -30,7 +30,7 @@ func (b *Bounded) RecoverTo(errPtr *error) {
 		return
 	}
 	if w, ok := r.(*errWrap); ok && w.b == b {
-		// our own panic: catch.
+		// our own "internal"/package-local panic: catch.
 		*errPtr = w.e
 	} else {
 		// alien panic: rethrow.
@@ -38,15 +38,21 @@ func (b *Bounded) RecoverTo(errPtr *error) {
 	}
 }
 
-// Panic must never be called by public API of your pkg, without `defer b.RecoverTo(&err)`
-func (b *Bounded) Panic(e error) {
+// Check must never be called by public API of your pkg, without `defer b.RecoverTo(&err)`
+func (b *Bounded) Check(e error) {
 	if e != nil {
 		panic(&errWrap{e, b})
 	}
 }
 
+func (b *Bounded) Checkf(cond bool, format string, a ...interface{}) {
+	if !cond {
+		panic(&errWrap{fmt.Errorf(format, a...), b})
+	}
+}
+
 func (b *Bounded) Panicf(format string, a ...interface{}) {
-	b.Panic(fmt.Errorf(format, a...))
+	panic(&errWrap{fmt.Errorf(format, a...), b})
 }
 
 func callerPkg() string {

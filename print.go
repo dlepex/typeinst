@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
-	"log"
 	"os"
 
 	pri "github.com/dlepex/typeinst/printer"
@@ -29,19 +28,20 @@ func newAstPrinter(w *bufio.Writer, rf pri.RenameFunc) *astPrinter {
 func (p *astPrinter) println(node interface{}) {
 	err := p.Fprint(p.w, p.fset, node)
 	if err != nil {
-		log.Fatalf("Print AST error (%v) for node: %v", err, node)
+		bpan.Panicf("Print AST error (%v) for node: %v", err, node)
 	}
 	_, err = p.w.WriteString("\n\n")
 	if err != nil {
-		log.Fatalf("Writer error: %v", err)
+		bpan.Panicf("Writer error: %v", err)
 	}
 }
 
-func (im *Impl) Print() error {
+func (im *Impl) Print() (err error) {
 	f, err := os.Create(im.outputFile)
 	if err != nil {
 		return err
 	}
+	defer bpan.RecoverTo(&err)
 	defer f.Close()
 	wr := bufio.NewWriter(f)
 	defer wr.Flush()

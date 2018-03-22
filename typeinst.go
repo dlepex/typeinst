@@ -16,34 +16,34 @@ const fileSuffix = "_ti"
 func main() {
 	gofile := os.Getenv("GOFILE")
 	fmt.Printf("$GOPATH = %v\n$GOFILE = %v\n", os.Getenv("GOPATH"), gofile)
-
-	implFile := implFilename(gofile, fileSuffix)
-
-	dsl, err := ParseDSL(gofile, "")
-	fatalIfErr(err)
-	impl := NewImpl(implFile, dsl.PkgName)
-	err = Dsl2Impl(dsl, impl)
-	fatalIfErr(err)
+	fatalIfErr(Run(gofile))
 }
 
-func Dsl2Impl(dsl *DSL, impl *Impl) (err error) {
+func Run(gofile string) (err error) {
 	defer bpan.RecoverTo(&err)
-	check := bpan.Panic
+	implFile := implFilename(gofile, fileSuffix)
+	dsl, err := ParseDSL(gofile, "")
+	bpan.Check(err)
+	impl := NewImpl(implFile, dsl.PkgName)
+	dsl2Impl(dsl, impl)
+	return
+}
+
+func dsl2Impl(dsl *DSL, impl *Impl) {
 	for _, it := range dsl.Items {
 		for _, g := range it.GenericTypes {
 			p, err := impl.Package(g.PkgName, dsl.Imports)
-			check(err)
+			bpan.Check(err)
 			log.Printf("dsl: type %s = %s with args: %v", it.InstName, g.Type, it.TypeArgs)
-			check(p.Inst(g.Type, it.InstName, it.TypeArgs))
+			bpan.Check(p.Inst(g.Type, it.InstName, it.TypeArgs))
 		}
 	}
 	for path, pdesc := range impl.pkg {
 		log.Printf("walk: %s", path)
-		check(pdesc.ResolveGeneric())
+		bpan.Check(pdesc.ResolveGeneric())
 	}
 	log.Printf("printing...")
-	check(impl.Print())
-	return
+	bpan.Check(impl.Print())
 }
 
 func implFilename(p, suf string) string {
