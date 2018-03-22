@@ -10,7 +10,7 @@ import (
 // Bounded simplifies the implemenetation of "internal" panic i.e. panic that doesn't cross package boundaries
 // The idea is that the public API of your package never leaks internal panics, see RecoverTo() & Panic() methods.
 type Bounded struct {
-	pkg string // todo:  caller pkg name
+	pkg string
 }
 
 type errWrap struct {
