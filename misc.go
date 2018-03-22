@@ -21,12 +21,12 @@ func genSymbol(prefix string) string {
 	return fmt.Sprintf("%s_%d", prefix, atomic.AddInt64(&symCounter, 1))
 }
 
-func DictStr(d map[string]string) (keystr, str string) {
+func dictStr(d map[string]string) (keystr, str string) {
 	if len(d) == 0 {
 		return "", ""
 	}
 	keys := make([]string, 0, len(d))
-	for k, _ := range d {
+	for k := range d {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
@@ -43,32 +43,33 @@ func DictStr(d map[string]string) (keystr, str string) {
 	return bk.String(), b.String()
 }
 
-// Immutable
+// TypeArgs is cached typevar bindings map, *TypeArgs is used as map key.
 type TypeArgs struct {
 	Binds map[string]string // typevar -> replacement
 	Key   string            // unique string for targsCache
 	Shape string            // unique string of Binds map keys
 }
 
-var targsCache map[string]*TypeArgs = make(map[string]*TypeArgs)
+var targsCache = make(map[string]*TypeArgs)
 var bindsCacheLock sync.Mutex
 
+// TypeArgsOf returns cached result
 func TypeArgsOf(m map[string]string) *TypeArgs {
 	if len(m) == 0 {
 		return nil
 	}
 	bindsCacheLock.Lock()
 	defer bindsCacheLock.Unlock()
-	shape, key := DictStr(m)
+	shape, key := dictStr(m)
 	if b, ok := targsCache[key]; ok {
 		return b
-	} else {
-		b := &TypeArgs{m, key, shape}
-		targsCache[key] = b
-		return b
 	}
+	b := &TypeArgs{m, key, shape}
+	targsCache[key] = b
+	return b
 }
 
+// Len returns number of bindings
 func (b *TypeArgs) Len() int {
 	if b == nil {
 		return 0

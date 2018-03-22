@@ -8,9 +8,7 @@ import (
 	"strings"
 )
 
-// Import limitations in "generic" packages:
-// - The imported packages must have the same local names in each file of the generic package
-// - Can not import package as "."
+// Imports is name-path bimap
 type Imports struct {
 	p2n map[string]string // path -> name, one side of bimap
 	n2p map[string]string // the other side
@@ -23,26 +21,29 @@ func (im *Imports) init() {
 	}
 }
 
+// IsEmpty -
 func (im *Imports) IsEmpty() bool { return len(im.p2n) == 0 }
 
+// AddSpec -
 func (im *Imports) AddSpec(spec *ast.ImportSpec) error {
-	return im.Add(ImportSpecName(spec), spec.Path.Value)
+	return im.Add(importSpecName(spec), spec.Path.Value)
 }
 
-func ImportSpecName(spec *ast.ImportSpec) string {
+func importSpecName(spec *ast.ImportSpec) string {
 	if spec.Name != nil {
 		return spec.Name.Name
-	} else {
-		a := strings.FieldsFunc(spec.Path.Value, func(r rune) bool {
-			return r == '"' || r == '/'
-		})
-		if len(a) == 0 {
-			log.Fatal("Nameless import spec")
-		}
-		return a[len(a)-1]
 	}
+	a := strings.FieldsFunc(spec.Path.Value, func(r rune) bool {
+		return r == '"' || r == '/'
+	})
+	if len(a) == 0 {
+		log.Fatal("Nameless import spec")
+	}
+	return a[len(a)-1]
+
 }
 
+// Add n - import name, p - import path
 func (im *Imports) Add(n, p string) error {
 	if n == "." {
 		return fmt.Errorf("dot-import is not allowed: %s", p)
@@ -54,9 +55,8 @@ func (im *Imports) Add(n, p string) error {
 	if oldn, ok := im.p2n[p]; ok {
 		if oldn != n {
 			return fmt.Errorf("import package %s under different names: %s, %s  ", p, n, oldn)
-		} else {
-			return nil
 		}
+		return nil
 	}
 	if oldp, ok := im.n2p[n]; ok {
 		if oldp != p {
@@ -91,12 +91,12 @@ func (im *Imports) Merge(other Imports) map[string]string {
 		}
 	}
 	for _, pair := range add {
-		im.Add(pair[0], pair[1])
+		_ = im.Add(pair[0], pair[1])
 	}
 	return rename
 }
 
-func (im *Imports) Decl() *ast.GenDecl {
+func (im *Imports) decl() *ast.GenDecl {
 	specs := make([]ast.Spec, 0, len(im.n2p))
 	for n, p := range im.n2p {
 		spec := &ast.ImportSpec{
@@ -122,6 +122,7 @@ func (im *Imports) Decl() *ast.GenDecl {
 	}
 }
 
+//Named returns import path by name
 func (im *Imports) Named(n string) string {
 	return im.n2p[n]
 }

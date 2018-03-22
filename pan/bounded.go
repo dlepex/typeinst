@@ -1,4 +1,4 @@
-// Le terme panique est une référence au dieu Pan en mythologie grecque
+// Package pan - le terme panique est une référence au dieu Pan en mythologie grecque
 package pan
 
 import (
@@ -18,12 +18,12 @@ type errWrap struct {
 	b *Bounded
 }
 
-// must be called to initialize private var of your package
+// NewBounded must be called to initialize private var of your package
 func NewBounded() *Bounded {
 	return &Bounded{callerPkg()}
 }
 
-// Public API of your package must use RecoverTo to translate "bounded panic" into error.
+// RecoverTo - public API of your package must use RecoverTo to translate "bounded panic" into error.
 func (b *Bounded) RecoverTo(errPtr *error) {
 	r := recover()
 	if r == nil {
@@ -45,12 +45,14 @@ func (b *Bounded) Check(e error) {
 	}
 }
 
+// Checkf asserts condition, if failed panics
 func (b *Bounded) Checkf(cond bool, format string, a ...interface{}) {
 	if !cond {
 		panic(&errWrap{fmt.Errorf(format, a...), b})
 	}
 }
 
+// Panicf -
 func (b *Bounded) Panicf(format string, a ...interface{}) {
 	panic(&errWrap{fmt.Errorf(format, a...), b})
 }

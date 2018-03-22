@@ -27,3 +27,4 @@ _testmain.go
 *.out
 *.log
 testdata/**/*_ti.go
+.vscode/

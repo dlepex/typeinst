@@ -6,11 +6,12 @@ import (
 	"unicode/utf8"
 )
 
+// MangleCtorName mangles constructor function name.
 // orig - original ctor name, gen - generic type name, inst - instantiated type name
 func MangleCtorName(orig, gen, inst string) string {
-	n, isUpper := StrUpcase(orig)
-	inst, _ = StrUpcase(inst)
-	gen, _ = StrUpcase(gen)
+	n, isUpper := strUpcase(orig)
+	inst, _ = strUpcase(inst)
+	gen, _ = strUpcase(gen)
 	g := strings.Index(n, gen)
 
 	if g < 0 {
@@ -18,49 +19,48 @@ func MangleCtorName(orig, gen, inst string) string {
 	} else {
 		n = orig[0:g] + inst + n[g+len(gen):]
 	}
-	return StrEnsureCase(n, isUpper)
+	return strEnsureCase(n, isUpper)
 }
 
-// "non-root generic types"
+// MangleDepTypeName mangles non-root generic type.
 // orig - original dependant type name, gen - "parent" type name, inst - instantiated "parent" type name
 func MangleDepTypeName(orig, gen, inst string) string {
-	n, isUpper := StrUpcase(orig)
-	gen, _ = StrUpcase(gen)
-	inst, _ = StrUpcase(inst)
+	n, isUpper := strUpcase(orig)
+	gen, _ = strUpcase(gen)
+	inst, _ = strUpcase(inst)
 	g := strings.Index(n, gen)
 	if g < 0 {
 		n = inst + n
 	} else {
 		n = orig[0:g] + inst + n[g+len(gen):]
 	}
-	return StrEnsureCase(n, isUpper)
+	return strEnsureCase(n, isUpper)
 }
 
-func StrUpcase(s string) (string, bool) {
-	return StrReplaceFirst(s, unicode.IsUpper, unicode.ToUpper)
+func strUpcase(s string) (string, bool) {
+	return strReplaceFirst(s, unicode.IsUpper, unicode.ToUpper)
 }
-func StrLocase(s string) (string, bool) {
-	return StrReplaceFirst(s, unicode.IsLower, unicode.ToLower)
+func strLocase(s string) (string, bool) {
+	return strReplaceFirst(s, unicode.IsLower, unicode.ToLower)
 
 }
 
-func StrEnsureCase(s string, isUpper bool) (result string) {
+func strEnsureCase(s string, isUpper bool) (result string) {
 	if isUpper {
-		result, _ = StrUpcase(s)
+		result, _ = strUpcase(s)
 	} else {
-		result, _ = StrLocase(s)
+		result, _ = strLocase(s)
 	}
 	return
 }
 
-func StrReplaceFirst(s string, isMapped func(rune) bool, doMap func(rune) rune) (string, bool) {
+func strReplaceFirst(s string, isMapped func(rune) bool, doMap func(rune) rune) (string, bool) {
 	if s == "" {
 		return "", true
 	}
 	r, p := utf8.DecodeRuneInString(s)
 	if isMapped(r) {
 		return s, true
-	} else {
-		return string(doMap(r)) + s[p:], false
 	}
+	return string(doMap(r)) + s[p:], false
 }

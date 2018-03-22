@@ -7,7 +7,7 @@ import (
 )
 
 //go:generate typeinst
-type _typeinst struct {
+type _typeinst struct { // nolint
 	StrSet      func(E string) set.Set
 	AstIdentSet func(E *ast.Ident) set.Set
 }

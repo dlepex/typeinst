@@ -19,12 +19,14 @@ func main() {
 	fatalIfErr(Run(gofile))
 }
 
+// Run - runs tool on a file
+// added for more convenient testing
 func Run(gofile string) (err error) {
 	defer bpan.RecoverTo(&err)
 	implFile := implFilename(gofile, fileSuffix)
 	dsl, err := ParseDSL(gofile, "")
 	bpan.Check(err)
-	impl := NewImpl(implFile, dsl.PkgName)
+	impl := newImpl(implFile, dsl.PkgName)
 	dsl2Impl(dsl, impl)
 	return
 }
@@ -40,7 +42,7 @@ func dsl2Impl(dsl *DSL, impl *Impl) {
 	}
 	for path, pdesc := range impl.pkg {
 		log.Printf("walk: %s", path)
-		bpan.Check(pdesc.ResolveGeneric())
+		bpan.Check(pdesc.resolveGeneric())
 	}
 	log.Printf("printing...")
 	bpan.Check(impl.Print())

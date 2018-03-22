@@ -9,8 +9,6 @@ import (
 	"os"
 	"reflect"
 	"strings"
-	"unicode"
-	"unicode/utf8"
 )
 
 type (
@@ -23,7 +21,7 @@ type (
 		outputFile string // generated file name
 	}
 
-	// Generic package desc - all types and their functions
+	// PkgDesc contains generic package desc - all types and their functions
 	PkgDesc struct {
 		name      string
 		types     map[string]*TypeDesc     // all package types by name
@@ -38,6 +36,7 @@ type (
 		occCtors  AstIdentSet              // occurences of constructor functions ...
 	}
 
+	// TypeDesc provides full type info
 	TypeDesc struct {
 		spec     *ast.TypeSpec
 		methods  []*ast.FuncDecl
@@ -49,7 +48,7 @@ type (
 	}
 )
 
-func NewImpl(outputFile, pkgName string) *Impl {
+func newImpl(outputFile, pkgName string) *Impl {
 	return &Impl{
 		pkg:        make(map[string]*PkgDesc),
 		imports:    Imports{},
@@ -91,16 +90,16 @@ func (td *TypeDesc) canBeTypevar() bool {
 	return len(td.ctors) == 0 && len(td.methods) == 0
 }
 
-func (t *TypeDesc) IsGeneric() bool { return len(t.typevars) != 0 }
+func (td *TypeDesc) isGeneric() bool { return len(td.typevars) != 0 }
 
-func (t *TypeDesc) inheritFrom(parent *TypeDesc) {
-	if t == parent {
+func (td *TypeDesc) inheritFrom(parent *TypeDesc) {
+	if td == parent {
 		return
 	}
-	t.initBinds()
+	td.initBinds()
 	for b, instName := range parent.inst {
-		if _, has := t.inst[b]; !has {
-			t.inst[b] = MangleDepTypeName(t.name(), parent.name(), instName)
+		if _, has := td.inst[b]; !has {
+			td.inst[b] = MangleDepTypeName(td.name(), parent.name(), instName)
 		}
 	}
 }
@@ -110,13 +109,13 @@ type tdescDict map[string]*TypeDesc
 func (m tdescDict) get(name string) *TypeDesc {
 	if t, ok := m[name]; ok {
 		return t
-	} else {
-		t = &TypeDesc{}
-		m[name] = t
-		return t
 	}
+	t := &TypeDesc{}
+	m[name] = t
+	return t
 }
 
+// Package - retrieves or parses generic package
 func (impl *Impl) Package(pkgPath string, imports Imports) (pkg *PkgDesc, err error) {
 	if p, ok := impl.pkg[pkgPath]; ok {
 		return p, nil
@@ -159,7 +158,7 @@ func (impl *Impl) Package(pkgPath string, imports Imports) (pkg *PkgDesc, err er
 							tdef.spec = tsp
 							if tsp.Comment != nil {
 								for _, c := range tsp.Comment.List {
-									if tdef.ParseSpecialComment(c.Text) {
+									if tdef.parseSpecialComment(c.Text) {
 										if tdef.typevar {
 											tpvars[name] = struct{}{}
 										}
@@ -244,7 +243,7 @@ func receiverType(fd *ast.FuncDecl) string {
 
 const commentPrefix string = "//typeinst:"
 
-func (td *TypeDesc) ParseSpecialComment(text string) bool {
+func (td *TypeDesc) parseSpecialComment(text string) bool {
 	if strings.HasPrefix(text, commentPrefix) {
 		text = strings.TrimPrefix(text, commentPrefix)
 		args := strings.Fields(text)
@@ -282,51 +281,43 @@ func (pd *PkgDesc) detectCtors() {
 	}
 }
 
-func (pk *PkgDesc) Inst(typName, instName string, typeArgs map[string]string) error {
-	t, ok := pk.types[typName]
+// Inst requests the creation of concrete type with given name and typeargs
+func (pd *PkgDesc) Inst(typName, instName string, typeArgs map[string]string) error {
+	t, ok := pd.types[typName]
 	if !ok {
-		return fmt.Errorf("Type %s not found in package %s", typName, pk.name)
+		return fmt.Errorf("Type %s not found in package %s", typName, pd.name)
 	}
-	for tv, _ := range typeArgs {
-		if !pk.typevars.Has(tv) {
-			if pk.strict {
-				return fmt.Errorf("strict mode: type %s cannot be a typevar in package  %s", tv, pk.name)
+	for tv := range typeArgs {
+		if !pd.typevars.Has(tv) {
+			if pd.strict {
+				return fmt.Errorf("strict mode: type %s cannot be a typevar in package  %s", tv, pd.name)
 			}
-			t, ok := pk.types[tv]
+			t, ok := pd.types[tv]
 			if !ok {
-				return fmt.Errorf("type %s (a typevar) not found in package %s", tv, pk.name)
+				return fmt.Errorf("type %s (a typevar) not found in package %s", tv, pd.name)
 			}
 			if !t.canBeTypevar() {
-				return fmt.Errorf("type %s cannot be a typevar in package  %s", tv, pk.name)
+				return fmt.Errorf("type %s cannot be a typevar in package  %s", tv, pd.name)
 			}
-			pk.typevars.Add(tv)
+			pd.typevars.Add(tv)
 			t.typevar = true
 		}
 	}
 	b := TypeArgsOf(typeArgs)
 	if _, has := t.inst[b]; has {
-		return fmt.Errorf("Type %s instantiated repeatedly with the same (type) arguments (%s) in package %s", typName, b.Key, pk.name)
+		return fmt.Errorf("Type %s instantiated repeatedly with the same (type) arguments (%s) in package %s", typName, b.Key, pd.name)
 	}
 	if shape := t.shape(); shape != nil && shape.Shape != b.Shape {
 		return fmt.Errorf("Type %s cannot be instantiated several times with inconsitent typevars (<%s> != <%s>) in package %s",
-			typName, b.Shape, shape.Shape, pk.name)
+			typName, b.Shape, shape.Shape, pd.name)
 	}
 	t.initBinds()
 	t.inst[b] = instName
-	pk.generic.Add(typName)
+	pd.generic.Add(typName)
 	return nil
 }
 
-func fmtTypeName(parent, tn string) string {
-	r, _ := utf8.DecodeRuneInString(tn)
-	if unicode.IsUpper(r) {
-		return parent + tn
-	} else {
-		return "privt_" + parent + tn
-	}
-}
-
-func (pk *PkgDesc) resolveRecur(td, parent *TypeDesc, visited StrSet) {
+func (pd *PkgDesc) resolveRecur(td, parent *TypeDesc, visited StrSet) {
 	if visited.Has(td.name()) {
 		return
 	}
@@ -337,10 +328,10 @@ func (pk *PkgDesc) resolveRecur(td, parent *TypeDesc, visited StrSet) {
 	}
 	depTypes := NewStrSet()
 	td.typevars = NewStrSet()
-	pk.walkType(td, func(params astWalkerParams) {
+	pd.walkType(td, func(params astWalkerParams) {
 		id := params.id
 		tn := id.Name
-		if t, ok := pk.types[tn]; ok {
+		if t, ok := pd.types[tn]; ok {
 			if t != td {
 				if t.typevar {
 					td.typevars.Add(tn)
@@ -350,13 +341,13 @@ func (pk *PkgDesc) resolveRecur(td, parent *TypeDesc, visited StrSet) {
 			}
 		}
 	})
-	for tn, _ := range depTypes {
-		dept, _ := pk.types[tn]
-		pk.resolveRecur(dept, parent, visited)
-		if dept.IsGeneric() {
-			pk.generic.Add(dept.name())
+	for tn := range depTypes {
+		dept, _ := pd.types[tn]
+		pd.resolveRecur(dept, parent, visited)
+		if dept.isGeneric() {
+			pd.generic.Add(dept.name())
 			// all typevars from dep type are inherited by "parent"
-			for tn, _ := range dept.typevars {
+			for tn := range dept.typevars {
 				td.typevars.Add(tn)
 			}
 		}
@@ -369,62 +360,62 @@ func (pk *PkgDesc) resolveRecur(td, parent *TypeDesc, visited StrSet) {
 }
 
 func (td *TypeDesc) shape() *TypeArgs {
-	for any, _ := range td.inst {
+	for any := range td.inst {
 		return any
 	}
 	return nil
 }
 
-func (pk *PkgDesc) ResolveGeneric() error {
-	roots := make([]*TypeDesc, 0, len(pk.generic))
-	for tn, _ := range pk.generic {
-		t, _ := pk.types[tn]
+func (pd *PkgDesc) resolveGeneric() error {
+	roots := make([]*TypeDesc, 0, len(pd.generic))
+	for tn := range pd.generic {
+		t, _ := pd.types[tn]
 		roots = append(roots, t)
 	}
 	for _, t := range roots {
-		pk.resolveRecur(t, nil, NewStrSet())
+		pd.resolveRecur(t, nil, NewStrSet())
 	}
 
-	for tn, _ := range pk.generic {
-		gent, _ := pk.types[tn]
+	for tn := range pd.generic {
+		gent, _ := pd.types[tn]
 		b := gent.shape()
-		for tv, _ := range gent.typevars {
+		for tv := range gent.typevars {
 			if _, has := b.Binds[tv]; !has {
-				return fmt.Errorf("typevar %s is unbound for generic type %s in package %s", tv, tn, pk.name)
+				return fmt.Errorf("typevar %s is unbound for generic type %s in package %s", tv, tn, pd.name)
 			}
 		}
 	}
 
-	for _, t := range pk.types {
-		if t.IsGeneric() {
+	for _, t := range pd.types {
+		if t.isGeneric() {
 			for ta, instName := range t.inst {
 				log.Printf("resolved: type %s = %s with args: %v ", instName, t.name(), ta.Binds)
 			}
-			pk.walkTypeMarkOcc(t)
+			pd.walkTypeMarkOcc(t)
 		}
 	}
 	return nil
 }
 
-func (pk *PkgDesc) markOccurences(p astWalkerParams) {
+func (pd *PkgDesc) markOccurences(p astWalkerParams) {
 	n := p.id.Name
 
 	if p.kind == ast.Typ || p.kind == ast.Bad {
-		if pk.generic.Has(n) || pk.typevars.Has(n) {
-			pk.occTypes.Add(p.id)
+		if pd.generic.Has(n) || pd.typevars.Has(n) {
+			pd.occTypes.Add(p.id)
 		}
 	} else if p.kind == ast.Fun || p.kind == ast.Bad {
-		if _, has := pk.ctors[n]; has {
-			pk.occCtors.Add(p.id)
+		if _, has := pd.ctors[n]; has {
+			pd.occCtors.Add(p.id)
 		}
 	} else {
-		if _, has := pk.impRename[n]; has {
-			pk.occPkgs.Add(p.id)
+		if _, has := pd.impRename[n]; has {
+			pd.occPkgs.Add(p.id)
 		}
 	}
 }
 
-func (pk *PkgDesc) walkType(t *TypeDesc, vf func(astWalkerParams)) {
+func (pd *PkgDesc) walkType(t *TypeDesc, vf func(astWalkerParams)) {
 	var reach astWalker = vf // "reachability" walker (it avoids body)
 
 	ast.Walk(reach, t.spec.Type)
@@ -438,10 +429,10 @@ func (pk *PkgDesc) walkType(t *TypeDesc, vf func(astWalkerParams)) {
 	}
 }
 
-func (pk *PkgDesc) walkTypeMarkOcc(t *TypeDesc) {
-	var mark astWalker = pk.markOccurences
+func (pd *PkgDesc) walkTypeMarkOcc(t *TypeDesc) {
+	var mark astWalker = pd.markOccurences
 	ast.Walk(mark, t.spec.Type)
-	pk.occTypes.Add(t.spec.Name)
+	pd.occTypes.Add(t.spec.Name)
 	for _, f := range t.methods {
 		ast.Walk(mark, f.Type)
 		ast.Walk(mark, f.Body)

@@ -15,7 +15,7 @@ import (
 // This file contains no real test, just various experiments (which should pass nicely)
 
 func TestPkgDef(t *testing.T) {
-	impl := NewImpl("", "")
+	impl := newImpl("", "")
 	impl.Package("github.com/dlepex/typeinst/testdata/test", Imports{})
 	for k, p := range impl.pkg {
 		t.Logf("%v # %v ## %s", k, p.typevars, p.types)
@@ -23,7 +23,7 @@ func TestPkgDef(t *testing.T) {
 }
 
 func TestWriteFile(t *testing.T) {
-	impl := NewImpl("", "")
+	impl := newImpl("", "")
 	pk, err := impl.Package("github.com/dlepex/typeinst/testdata/g/maps", Imports{})
 	ce(t, err)
 	pk1, err := impl.Package("github.com/dlepex/typeinst/testdata/g/slices/filter", Imports{})
@@ -46,14 +46,14 @@ func TestWriteFile(t *testing.T) {
 		"T": "int",
 	})
 	ce(t, err)
-	ce(t, pk.ResolveGeneric())
-	ce(t, pk1.ResolveGeneric())
+	ce(t, pk.resolveGeneric())
+	ce(t, pk1.resolveGeneric())
 
 	ce(t, impl.Print())
 }
 
 func xTestPkgInst(t *testing.T) {
-	impl := NewImpl("", "")
+	impl := newImpl("", "")
 	pd, err := impl.Package("github.com/dlepex/typeinst/testdata/test", Imports{})
 	if err != nil {
 		t.Error(err)
@@ -80,7 +80,7 @@ func xTestPkgInst(t *testing.T) {
 	}
 	pd.impRename = make(map[string]string)
 	pd.impRename["_un"] = "x"
-	err = pd.ResolveGeneric()
+	err = pd.resolveGeneric()
 	if err != nil {
 		t.Error(err)
 		return
@@ -103,7 +103,7 @@ func xTestPkgInst(t *testing.T) {
 
 	for tn, tp := range pd.types {
 		if tp.visited {
-			t.Logf("TYPE: %s <tv: %v> -->> binds: %v, gen: %v,  ctors %v", tn, tp.typevars, tp.inst, tp.IsGeneric(), tp.ctors)
+			t.Logf("TYPE: %s <tv: %v> -->> binds: %v, gen: %v,  ctors %v", tn, tp.typevars, tp.inst, tp.isGeneric(), tp.ctors)
 			//ast.Print(nil, tp.spec.Type)
 		}
 		if len(tp.methods) == 0 {

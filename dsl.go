@@ -12,30 +12,32 @@ import (
 )
 
 type (
+	// DSL - dsl-struct description
 	DSL struct {
 		Imports
 		Items   []*DSLItem
 		PkgName string
 	}
-
-	PkgTypePair struct {
-		PkgName string
-		Type    string
-	}
-
+	// DSLItem corresponds to the field of dsl-struct
 	DSLItem struct {
 		InstName     string
 		GenericTypes []PkgTypePair
 		TypeArgs     map[string]string
 	}
+	// PkgTypePair tuple of type and its package
+	PkgTypePair struct {
+		PkgName string
+		Type    string
+	}
 )
 
-const DefaultStructName = "_typeinst"
+const defaultStructName = "_typeinst"
 
+// ParseDSL parses and rertrieves dsl-struct
 func ParseDSL(filename, structName string) (dsl *DSL, err error) {
 	defer bpan.RecoverTo(&err)
 	if structName == "" {
-		structName = DefaultStructName
+		structName = defaultStructName
 	}
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
@@ -77,8 +79,8 @@ func ParseDSL(filename, structName string) (dsl *DSL, err error) {
 			it.TypeArgs[typeVar] = stringer.ToString(field.Type)
 		}
 
-		for pkgname, _ := range typeVarsPkgs {
-			dsl.Imports.Add(pkgname, imports.requireNamed(pkgname))
+		for pkgname := range typeVarsPkgs {
+			bpan.Check(dsl.Imports.Add(pkgname, imports.requireNamed(pkgname)))
 		}
 
 		qtset := NewStrSet()
@@ -90,7 +92,7 @@ func ParseDSL(filename, structName string) (dsl *DSL, err error) {
 			if pair.PkgName == "" {
 				bpan.Panicf(estr("generic type cannot be local, it must be imported from another package"))
 			}
-			qt := pair.QualifiedType()
+			qt := pair.qualifiedType()
 			if qtset.Has(qt) {
 				bpan.Panicf(estr("merging repeated generic type: %v"), qt)
 			}
@@ -160,7 +162,7 @@ func (s *astStringer) ToString(node interface{}) string {
 		s.Config.Mode = printer.RawFormat
 	}
 	s.buf.Reset()
-	s.Fprint(s.buf, s.fset, node)
+	_ = s.Fprint(s.buf, s.fset, node)
 	return s.buf.String()
 }
 
@@ -192,7 +194,7 @@ func parseGenericTypeExpr(t ast.Expr) PkgTypePair {
 	return PkgTypePair{}
 }
 
-func (p PkgTypePair) QualifiedType() string {
+func (p PkgTypePair) qualifiedType() string {
 	if p.PkgName == "" {
 		return p.Type
 	}
