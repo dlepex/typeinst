@@ -76,7 +76,7 @@ If you do not like the implicit ("mangled") names of non-root types, you can alw
 
 #### Constructor function
 
-Constructor function of generic type `G` is function that returns:
+Constructor function of generic type `G` is a function that returns:
 - `G`, `*G`, `[]G`, `[n]G`
 - or their combination (e.g. `**G`, `*[42]G`,`[][][]*G`), max nesting depth is 16.
 - in case of multiple return values: only the first return var is checked.
