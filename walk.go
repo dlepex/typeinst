@@ -186,31 +186,28 @@ func (impl *Impl) Package(pkgPath string, imports Imports) (pkg *PkgDesc, err er
 	return
 }
 
-func unpackTypeOrPtrType(t ast.Node) (name string, el ast.Node) {
+func unpackRecur(depth uint32, t ast.Node) string {
+	if depth == 0 {
+		return ""
+	}
 	switch t := t.(type) {
 	case *ast.Ident:
-		name = t.Name
+		return t.Name
 	case *ast.StarExpr:
-		el := t.X
-		if id, ok := el.(*ast.Ident); ok {
-			name = id.Name
-		}
+		return unpackRecur(depth-1, t.X)
 	case *ast.ArrayType:
-		el = t.Elt
+		return unpackRecur(depth-1, t.Elt)
+	default:
+		return ""
 	}
-	return
 }
 
-func unpackReturnType(fd *ast.FuncDecl) (name string) {
+func unpackCtorRet(fd *ast.FuncDecl) string {
 	r := fd.Type.Results
 	if r != nil && len(r.List) > 0 {
-		var el ast.Node
-		name, el = unpackTypeOrPtrType(r.List[0].Type)
-		if name == "" && el != nil {
-			name, _ = unpackTypeOrPtrType(el)
-		}
+		return unpackRecur(16, r.List[0].Type)
 	}
-	return
+	return ""
 }
 
 func pkgFileFilter(info os.FileInfo) bool {
@@ -271,7 +268,7 @@ func (td *TypeDesc) ParseSpecialComment(text string) bool {
 func (pd *PkgDesc) detectCtors() {
 	ctors := []string{}
 	for fname, fd := range pd.funcs {
-		if r := unpackReturnType(fd); r != "" {
+		if r := unpackCtorRet(fd); r != "" {
 			if tdef, ok := pd.types[r]; ok {
 				tdef.addCtor(fd)
 				pd.ctors[fname] = tdef

@@ -37,3 +37,7 @@ func (t *TreeMap) Put(k K, v V) {
 func makeWrappers() []*wrapper {
 	return nil
 }
+
+func makeWrappers99() []**[99]*[]wrapper {
+	return nil
+}
