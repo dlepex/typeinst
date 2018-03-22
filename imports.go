@@ -84,7 +84,7 @@ func (im *Imports) Merge(other Imports) map[string]string {
 			if !hasn {
 				add = append(add, [2]string{n, p})
 			} else {
-				gs := GenSymbol("_Pkg")
+				gs := genSymbol("_Pkg")
 				rename[n] = gs
 				add = append(add, [2]string{gs, p})
 			}
@@ -129,7 +129,7 @@ func (im *Imports) Named(n string) string {
 func (im *Imports) requireNamed(n string) string {
 	p := im.Named(n)
 	if p == "" {
-		localPanicf("unresolved import named: %s", n)
+		bpan.Panicf("unresolved import named: %s", n)
 	}
 	return p
 }

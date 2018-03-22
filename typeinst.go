@@ -14,7 +14,6 @@ import (
 const fileSuffix = "_ti"
 
 func main() {
-
 	gofile := os.Getenv("GOFILE")
 	fmt.Printf("$GOPATH = %v\n$GOFILE = %v\n", os.Getenv("GOPATH"), gofile)
 
@@ -28,8 +27,8 @@ func main() {
 }
 
 func Dsl2Impl(dsl *DSL, impl *Impl) (err error) {
-	defer recoverTo(&err)
-	check := localPanic
+	defer bpan.RecoverTo(&err)
+	check := bpan.Panic
 	for _, it := range dsl.Items {
 		for _, g := range it.GenericTypes {
 			p, err := impl.Package(g.PkgName, dsl.Imports)

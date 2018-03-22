@@ -69,14 +69,14 @@ func (td *TypeDesc) name() string {
 
 func (td *TypeDesc) addFunc(f *ast.FuncDecl) {
 	if td.typevar {
-		localPanicf("Typevar %s can't be func receiver: %s", td.name(), f.Name.Name)
+		bpan.Panicf("Typevar %s can't be func receiver: %s", td.name(), f.Name.Name)
 	}
 	td.methods = append(td.methods, f)
 }
 
 func (td *TypeDesc) addCtor(f *ast.FuncDecl) {
 	if td.typevar {
-		localPanicf("Typevar %s can't have constructors: %s", td.name(), f.Name.Name)
+		bpan.Panicf("Typevar %s can't have constructors: %s", td.name(), f.Name.Name)
 	}
 	td.ctors = append(td.ctors, f)
 }
@@ -121,7 +121,7 @@ func (impl *Impl) Package(pkgPath string, imports Imports) (pkg *PkgDesc, err er
 	if p, ok := impl.pkg[pkgPath]; ok {
 		return p, nil
 	}
-	defer recoverTo(&err)
+	defer bpan.RecoverTo(&err)
 	types := tdescDict(make(map[string]*TypeDesc))
 	funcs := make(map[string]*ast.FuncDecl)
 	tpvars := NewStrSet()

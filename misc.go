@@ -9,11 +9,15 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/dlepex/typeinst/pan"
 )
 
-var symCounter int64 = 123
+var bpan = pan.NewBounded()
 
-func GenSymbol(prefix string) string {
+var symCounter int64 = 9
+
+func genSymbol(prefix string) string {
 	return fmt.Sprintf("%s_%d", prefix, atomic.AddInt64(&symCounter, 1))
 }
 
@@ -70,35 +74,6 @@ func (b *TypeArgs) Len() int {
 		return 0
 	}
 	return len(b.Binds)
-}
-
-type localErr struct {
-	error
-}
-
-// recoverTo recovers local panics
-// Public funcs must use it to catch localPanic(): defer recoverTo(&err)
-func recoverTo(pe *error) {
-	r := recover()
-	if r == nil {
-		return
-	}
-	if e, ok := r.(localErr); ok {
-		*pe = e
-	} else {
-		panic(r)
-	}
-}
-
-// localPanic: Public func can't call this func without defer recoverTo()
-func localPanic(e error) {
-	if e != nil {
-		panic(localErr{e})
-	}
-}
-
-func localPanicf(format string, a ...interface{}) {
-	localPanic(fmt.Errorf(format, a...))
 }
 
 func unquote(s string) string {

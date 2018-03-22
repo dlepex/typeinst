@@ -33,7 +33,7 @@ type (
 const DefaultStructName = "_typeinst"
 
 func ParseDSL(filename, structName string) (dsl *DSL, err error) {
-	defer recoverTo(&err)
+	defer bpan.RecoverTo(&err)
 	if structName == "" {
 		structName = DefaultStructName
 	}
@@ -63,15 +63,15 @@ func ParseDSL(filename, structName string) (dsl *DSL, err error) {
 			return s + " [in dsl-struct field: " + it.InstName + "]"
 		}
 		if t.Params == nil || len(t.Params.List) == 0 {
-			localPanicf(estr("dsl-func has no arguments i.e. typevar substitutions"))
+			bpan.Panicf(estr("dsl-func has no arguments i.e. typevar substitutions"))
 		}
 		if t.Results == nil || len(t.Results.List) == 0 {
-			localPanicf(estr("dsl-func has no result i.e. generic type"))
+			bpan.Panicf(estr("dsl-func has no result i.e. generic type"))
 		}
 		for _, field := range t.Params.List {
 			typeVar := fieldName(field)
 			if typeVar == "" {
-				localPanicf(estr("typevar param in func requires name"))
+				bpan.Panicf(estr("typevar param in func requires name"))
 			}
 			ast.Walk(walker, field.Type)
 			it.TypeArgs[typeVar] = stringer.ToString(field.Type)
@@ -84,15 +84,15 @@ func ParseDSL(filename, structName string) (dsl *DSL, err error) {
 		qtset := NewStrSet()
 		for _, field := range t.Results.List {
 			if len(field.Names) > 0 {
-				localPanicf(estr("dsl-func result cannot have field names"))
+				bpan.Panicf(estr("dsl-func result cannot have field names"))
 			}
 			pair := parseGenericTypeExpr(field.Type)
 			if pair.PkgName == "" {
-				localPanicf(estr("generic type cannot be local, it must be imported from another package"))
+				bpan.Panicf(estr("generic type cannot be local, it must be imported from another package"))
 			}
 			qt := pair.QualifiedType()
 			if qtset.Has(qt) {
-				localPanicf(estr("merging repeated generic type: %v"), qt)
+				bpan.Panicf(estr("merging repeated generic type: %v"), qt)
 			}
 			qtset.Add(qt)
 			pair.PkgName = imports.requireNamed(pair.PkgName)
@@ -103,10 +103,10 @@ func ParseDSL(filename, structName string) (dsl *DSL, err error) {
 	parseStruct := func(ts *ast.TypeSpec) {
 		expr, ok := ts.Type.(*ast.StructType)
 		if !ok {
-			localPanicf("struct type expected")
+			bpan.Panicf("struct type expected")
 		}
 		if expr.Fields == nil || len(expr.Fields.List) == 0 {
-			localPanicf("empty struct")
+			bpan.Panicf("empty struct")
 		}
 		for _, field := range expr.Fields.List {
 			it := &DSLItem{
@@ -115,7 +115,7 @@ func ParseDSL(filename, structName string) (dsl *DSL, err error) {
 			}
 			ft, ok := field.Type.(*ast.FuncType)
 			if !ok {
-				localPanicf("struct fields must have func types, e.g: `func(K int, V string) MyMap`, found: field: %s type: %v ",
+				bpan.Panicf("struct fields must have func types, e.g: `func(K int, V string) MyMap`, found: field: %s type: %v ",
 					it.InstName, reflect.TypeOf(ts.Type))
 			}
 			parseFunc(it, ft)
@@ -142,7 +142,7 @@ func ParseDSL(filename, structName string) (dsl *DSL, err error) {
 
 func fieldName(field *ast.Field) string {
 	if len(field.Names) != 1 {
-		localPanicf("field must have one name in struct fields and func params/returns: %v", field.Names)
+		bpan.Panicf("field must have one name in struct fields and func params/returns: %v", field.Names)
 	}
 	return field.Names[0].Name
 }
@@ -188,7 +188,7 @@ func parseGenericTypeExpr(t ast.Expr) PkgTypePair {
 			return PkgTypePair{t.Name, typ}
 		}
 	}
-	localPanicf("unexpected type expr for generic type: %v in expr: %v", reflect.TypeOf(t), t)
+	bpan.Panicf("unexpected type expr for generic type: %v in expr: %v", reflect.TypeOf(t), t)
 	return PkgTypePair{}
 }
 
