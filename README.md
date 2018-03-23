@@ -166,7 +166,7 @@ As a side note, since ESGT are just named empty structs, they are all [type-merg
 	- non generic code in generic package
 	- merging unmergeable types
 	- identifier name clashes
-
+1. It is worth to remember that Typeinst is a code generator and not a typechecker, and in many cases there is nothing wrong with using `interface{}`.
 
 ## __Implementation notes__
 
