@@ -160,7 +160,7 @@ As a side note, since ESGT are just named empty structs, they are all [type-merg
 2. Type variables cannot be substituted by:
 	- "anonymous" non-empty struct [solution: use named types or type alias]
 	- "anonymous" non-empty interface [solution: the same]
-3. Functions w/o receiver (except constructors) cannot be generic. [solution: if you really need a generic function you can use [ESGT](#empty-singleton-generic-types).
+3. Functions w/o receiver (except constructors) cannot be generic [solution: [ESGT](#empty-singleton-generic-types)]
 4. [Read generic package section](#generic-package)
 5. Not all errors are checked during code generation, some of them will potentially result in uncompilable code: 
 	- non generic code in generic package
