@@ -29,7 +29,7 @@ Typeinst is to be used with `go generate`, it has no command line options: it us
 1. The result is `<file>_ti.go`, where `<file>` is a name of the file where DSL-struct is declared. The file is generated in the same package and it contains ALL concrete types described by DSL-struct.
 
 ## __Features__
-- __Selective type instantiation__: Typeinst will only create the required *generic types*, not the whole generic package at once. 
+- __Selective type instantiation__: Typeinst will only create the required *generic types*, not the whole generic package at once.
 - [Constructor functions](#constructor-function) support
 - [Type merging](#type-merging) support
 - The implementer of a generic package doesn't need to use any special comments or magic imports. Generic package is a rather normal package, where some types (or type aliases) serve as type variables.
@@ -64,7 +64,7 @@ Type is considered generic if one or more type variables are [reachable](#reacha
 Generic type `G` consists of:
 - type declaration 
 - methods (functions with receiver `G` or `*G`)
-- *constructor functions*
+- [constructor functions](#constructor-function)
 
 
 *Root generic types* are the types that are explicitly instantiated (i.e. the results of DSL-funcs)
