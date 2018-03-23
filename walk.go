@@ -38,13 +38,14 @@ type (
 
 	// TypeDesc provides full type info
 	TypeDesc struct {
-		spec     *ast.TypeSpec
-		methods  []*ast.FuncDecl
-		ctors    []*ast.FuncDecl      // constructor functions
-		inst     map[*TypeArgs]string // typeargs -> instname; (map nonempty only for generic types)
-		typevars StrSet               // set is populated typevars upon which this generic type depends
-		typevar  bool                 // does this type serves as a typevar?
-		visited  bool                 // was this type ever visited from any "root" generic type (root is what passed to Inst() func)
+		spec      *ast.TypeSpec
+		methods   []*ast.FuncDecl
+		ctors     []*ast.FuncDecl      // constructor functions
+		inst      map[*TypeArgs]string // typeargs -> instname; (map nonempty only for generic types)
+		typevars  StrSet               // set is populated typevars upon which this generic type depends
+		typevar   bool                 // does this type serves as a typevar?
+		visited   bool                 // was this type ever visited from any "root" generic type (root is what passed to Inst() func)
+		singleton bool                 // was type declared as empty struct?
 	}
 )
 
@@ -92,6 +93,17 @@ func (td *TypeDesc) canBeTypevar() bool {
 
 func (td *TypeDesc) isGeneric() bool { return len(td.typevars) != 0 }
 
+func isSingleton(spec *ast.TypeSpec) bool {
+	switch t := spec.Type.(type) {
+	case *ast.StructType:
+		if t.Fields == nil || len(t.Fields.List) == 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// non-root type "inherits" bindings from parent
 func (td *TypeDesc) inheritFrom(parent *TypeDesc) {
 	if td == parent {
 		return
@@ -156,6 +168,7 @@ func (impl *Impl) Package(pkgPath string, imports Imports) (pkg *PkgDesc, err er
 							name := tsp.Name.Name
 							tdef := types.get(name)
 							tdef.spec = tsp
+							tdef.singleton = isSingleton(tsp)
 							if tsp.Comment != nil {
 								for _, c := range tsp.Comment.List {
 									if tdef.parseSpecialComment(c.Text) {

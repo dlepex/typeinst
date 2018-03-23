@@ -58,6 +58,14 @@ func (im *Impl) Print() (err error) {
 	return
 }
 
+func (td *TypeDesc) printedName(n string) string {
+	if !td.singleton {
+		return n
+	}
+	// for singleton types their name is used for var-declaration
+	return n + "Type"
+}
+
 func (pk *PkgDesc) renameFunc(args *TypeArgs, inCtor bool) pri.RenameFunc {
 	return func(id *ast.Ident) string {
 		n := id.Name
@@ -66,7 +74,7 @@ func (pk *PkgDesc) renameFunc(args *TypeArgs, inCtor bool) pri.RenameFunc {
 			if t.typevar {
 				return args.Binds[n]
 			} else if t.isGeneric() {
-				return t.inst[args]
+				return t.printedName(t.inst[args])
 			} else {
 				return n
 			}
@@ -85,12 +93,31 @@ func (pk *PkgDesc) renameFunc(args *TypeArgs, inCtor bool) pri.RenameFunc {
 	}
 }
 
-func (td *TypeDesc) decl() *ast.GenDecl {
-	gd := ast.GenDecl{}
+func (td *TypeDesc) decl(instName string) []*ast.GenDecl {
+
+	gd := &ast.GenDecl{}
 	gd.Tok = token.TYPE
 	// todo rename type in spec
 	gd.Specs = []ast.Spec{td.spec}
-	return &gd
+	if !td.singleton {
+		return []*ast.GenDecl{gd}
+	}
+
+	vd := &ast.GenDecl{}
+	vd.Tok = token.VAR
+	vs := &ast.ValueSpec{
+		Type:  &ast.Ident{Name: td.printedName(instName)},
+		Names: []*ast.Ident{&ast.Ident{Name: instName}},
+		/*
+			Values: []ast.Expr{&ast.CompositeLit{
+				Type: &ast.StructType{
+					Fields: &ast.FieldList{},
+				},
+			}},
+		*/
+	}
+	vd.Specs = []ast.Spec{vs}
+	return []*ast.GenDecl{gd, vd}
 }
 
 func (pk *PkgDesc) print(wr *bufio.Writer, typedefs StrSet) {
@@ -103,7 +130,9 @@ func (pk *PkgDesc) print(wr *bufio.Writer, typedefs StrSet) {
 				p := newAstPrinter(wr, pk.renameFunc(typeArgs, false))
 				if !typedefs.Has(instName) {
 					// instName is printed once (this is how "merged" types work)
-					p.println(tp.decl())
+					for _, d := range tp.decl(instName) {
+						p.println(d)
+					}
 					typedefs.Add(instName)
 				}
 				if len(tp.ctors) > 0 {

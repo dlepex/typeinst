@@ -33,21 +33,20 @@ Typeinst is to be used with `go generate`, it has no command line options: it us
 - [Constructor functions](#constructor-function) support
 - [Type merging](#type-merging) support
 - The implementer of a generic package doesn't need to use any special comments or magic imports. Generic package is a rather normal package, where some types (or type aliases) serve as type variables.
+- Special support for [empty singleton generic types](#empty-singleton-generic-types).
 
 ## __Terminology__
 
 #### Type variable
 
-Type variables (type-parameters of generic types) are declared within generic package, usually as empty interface:
+Type variables (type-parameters of generic types) are declared within generic package, usually as am empty interface:
 ```go
-type A = interface{} // Alias is the preferred form.
-type B interface{} // This form is possible too but it may be less convenient than the alias-based if you want to use a generic package directly i.e. w/o typeinst.
-
+type E interface{}
+type A = interface{} // alias form is ok too
 type C interface { // Non-empty interface type variables can be used as well.
 	Less(C) bool     // Type variable C can only be substituted by types having `Less()` method.
 }
 ```
-
 __The names of DSL-func parameters define what types will serve as type variables__
 
 As an implementor of a generic package you may __optionally__ use the special "typevar"-comment:
@@ -107,9 +106,9 @@ Generic package may import other packages. However, imported packages are never 
 
 #### Type merging
 
-Type merging allows an instantiated type to be assembled from multiple orthogonal behavioral parts.
+Type merging allows an instantiated type to be assembled from multiple orthogonal behavioral parts (or in other words: non-intersecting method sets).
 
-"Behavioral parts" must have the same type after substitution of type variables.
+"Behavioral parts" must have the same declared type after the substitution of type variables.
 
 ```go
 type T = interface{} 
@@ -130,6 +129,29 @@ type _typeinst struct {
 ```
 `IntSlice` will contain both filtering and aggregation methods.
 
+#### Empty singleton generic types
+
+ESGT (declared as empty struct) serve as dummy receivers (or a namespace) for their method or methods, and thus
+they can be used when you need a generic function (Typeinst is type-based, and it is impossible to create generic functions directly).
+Here is an example:
+```go
+type E interface{} // E is a type var
+type ChanMerge struct{} // ESGT which depends on E through its method Merge i.e. this type is generic
+
+func (_ ChanMerge) Merge(cs ...<-chan E) <-chan E {...}
+```
+**For singleton types Typeinst will not only generate a type-declaration, but also a var-declaration**
+
+```go
+//go:generate typeinst
+type _typeinst struct {
+	intChans	func(E int) (somepkg.ChanMerge)
+} 
+```
+In this example Typeinst will generate var _intChans_ and type _intChansType_.
+
+As a side note, since ESGT are just named empty structs, they are all [type-mergeable](#type-merging).
+
 ## __Limitations__
 
 1. Imports in generic packages:
@@ -138,7 +160,7 @@ type _typeinst struct {
 2. Type variables cannot be substituted by:
 	- "anonymous" non-empty struct [solution: use named types or type alias]
 	- "anonymous" non-empty interface [solution: the same]
-3. Functions w/o receiver (except constructors) cannot be generic. [solution: use methods instead; ultimately generic types based on empty struct can be used as dummy receivers].
+3. Functions w/o receiver (except constructors) cannot be generic. [solution: if you really need a generic function you can use [ESGT](#empty-singleton-generic-types).
 4. [Read generic package section](#generic-package)
 5. Not all errors are checked during code generation, some of them will potentially result in uncompilable code: 
 	- non generic code in generic package
@@ -149,7 +171,7 @@ type _typeinst struct {
 ## __Implementation notes__
 
 - AST rewriting is not used. Identifier substitution happens simultaneously with printing AST to file. For that purpose, the standard "go/printer" package was slightly modified: extra field `RenameFunc` was added to the `Config` struct.
-- Typeinst has been used to generate a part of itself: [🌀 gentypes.go](https://github.com/dlepex/typeinst/blob/master/gentypes.go)
+- Typeinst has been used to generate a part of itself: [gentypes.go](https://github.com/dlepex/typeinst/blob/master/gentypes.go)
 
 ## todo
 

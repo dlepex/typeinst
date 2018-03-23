@@ -134,21 +134,6 @@ func Test2(t *testing.T) {
 	t.Log(a[len(a)-1])
 }
 
-func TestPkg(t *testing.T) {
-	im := Imports{}
-	ce(t, im.Add("n", "p"))
-	ce(t, im.Add("n1", "p1"))
-
-	im1 := Imports{}
-
-	ce(t, im1.Add("a", "p1"))
-	ce(t, im1.Add("n1", "Q"))
-	ce(t, im1.Add("a1", "Q1"))
-
-	m := im.Merge(im1)
-	t.Logf("rename %v result %v", m, im.n2p)
-}
-
 func ce(t *testing.T, err error) {
 	if err != nil {
 		t.Fatalf("CheckErr: %v", err)
@@ -156,7 +141,7 @@ func ce(t *testing.T, err error) {
 }
 
 func TestDsl(t *testing.T) {
-	dsl, err := ParseDSL("/Users/dlepex/dev/go/work/src/github.com/dlepex/typeinst/testdata/usage/usg1.go", "")
+	dsl, err := ParseDSL("/Users/dlepex/dev/go/work/src/github.com/dlepex/typeinst/testdata/usage/case1.go", "")
 	ce(t, err)
 
 	for _, it := range dsl.Items {
