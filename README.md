@@ -29,20 +29,21 @@ Typeinst is to be used with `go generate`, it has no command line options: it us
 1. The result is `<file>_ti.go`, where `<file>` is a name of the file where DSL-struct is declared. The file is generated in the same package and it contains ALL concrete types described by DSL-struct.
 
 ## __Features__
-- __Selective type instantiation__: Typeinst will only create the required *generic types*, not the whole generic package at once.
+- __Selective type instantiation__: Typeinst only generates the requested types, not the whole generic package at once: this tool is type-based, not package-based.
 - [Constructor functions](#constructor-function) support
 - [Type merging](#type-merging) support
-- The implementer of a generic package doesn't need to use any special comments or magic imports. Generic package is a rather normal package, where some types (or type aliases) serve as type variables.
+- No mandatory magic comments, and no magic imports in generic code
 - Special support for [empty singleton generic types](#empty-singleton-generic-types).
 
 ## __Terminology__
 
 #### Type variable
 
-Type variables (type-parameters of generic types) are declared within generic package, usually as am empty interface:
+Type variables (type-parameters of generic types) are declared within generic package, usually as an empty interface:
 ```go
 type E interface{}
 type A = interface{} // Alias form is ok too
+
 type C interface { // Non-empty interface type variables can be used as well.
 	Less(C) bool     // Type variable C can only be substituted by types having `Less()` method.
 }
@@ -53,13 +54,13 @@ As an implementor of a generic package you may __optionally__ use the special "t
 ```go
 type E = interface{} //typeinst: typevar
 ```
-This comment only provides better error messages, in case a user of your generic package omits a type variable in DSL-func. 
+This comment provides error message, in case a user of your generic package omits the type variable in DSL-func.
 
 Please note that, if the "typevar"-comment was used for one type variable, it MUST be used for the rest of them (in the same generic package).
 
 #### Generic type
 
-Type is considered generic if one or more type variables are [reachable](#reachability) from it.
+A type is considered generic if it [depends on](#type-dependency-relation) at least one type variable.
 
 Generic type `G` consists of:
 - type declaration 
@@ -69,7 +70,8 @@ Generic type `G` consists of:
 
 *Root generic types* are the types that are explicitly instantiated (i.e. the results of DSL-funcs)
 
-*Non-root generic types* are [reachable](#reachability) from root types, they are implicitly instantiated (and implicitly named). For instance, hypothetical root type `AVLTree` requires non-root type `AVLTreeNode`.
+Root types may [depend on](#type-dependency-relation) *non-root generic types*, non-root types are implicitly instantiated and implicitly named. 
+For instance, hypothetical root type `AVLTree` depends on non-root type `AVLTreeNode`.
 
 If you do not like the implicit ("mangled") names of non-root types, you can always name them on your own by making them root, i.e. by adding their explicit instantiation to DSL-struct.
 
@@ -83,13 +85,13 @@ Constructor function of generic type `G` is a function that returns:
 
 Constructor functions usually have names started with `New`, but this is not enforced.
 
-#### Reachability
+#### Type dependency relation
 
-Type B is directly reachable from type A if it occurs in:
+Type A directly _depends on_ type B if type B occurs in:
 - type A declaration
-- signatures of type A methods or constructor functions (bodies are not scanned)
+- signatures of type A methods or constructor functions
 
-Reachability is a transitive, non-symmetric relation.
+Type dependency is a transitive, non-symmetric relation.
 
 #### Generic package
 
@@ -167,8 +169,8 @@ As a side note, since ESGT are just named empty structs, they are all [type-merg
 5. Not all errors are checked during code generation, some of them will potentially result in uncompilable code: 
 	- non generic code in generic package
 	- merging unmergeable types
-	- identifier name clashes
-1. It is worth to remember that Typeinst is a code generator and not a typechecker, and in many cases there is nothing wrong with using `interface{}`.
+	- identifier name clashes or shadowing
+1. It is worth to remember that Typeinst is a code generator and not a typechecker, and that in many cases `interface{}` is ok.
 
 ## __Implementation notes__
 
