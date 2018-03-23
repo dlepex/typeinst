@@ -42,7 +42,7 @@ Typeinst is to be used with `go generate`, it has no command line options: it us
 Type variables (type-parameters of generic types) are declared within generic package, usually as am empty interface:
 ```go
 type E interface{}
-type A = interface{} // alias form is ok too
+type A = interface{} // Alias form is ok too
 type C interface { // Non-empty interface type variables can be used as well.
 	Less(C) bool     // Type variable C can only be substituted by types having `Less()` method.
 }
