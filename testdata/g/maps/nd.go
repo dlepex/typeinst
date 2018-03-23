@@ -1,6 +1,10 @@
 // nolint
 package maps
 
+import (
+	"fmt"
+)
+
 type Node struct {
 	key   K
 	val   V
@@ -22,5 +26,11 @@ func (_ Maps) Create(keys []K, mapper func(K) V) map[K]V {
 type Maps2 struct{}
 
 func (_ Maps2) Create2(keys []K, mapper func(K) V) map[K]V {
-	return nil
+	x := maxW
+	fmt.Print(x)
+	switch len(keys) {
+	case maxW:
+		return nil
+	}
+	return make(map[K]V)
 }

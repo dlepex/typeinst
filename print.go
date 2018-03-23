@@ -67,6 +67,8 @@ func (td *TypeDesc) printedName(n string) string {
 }
 
 func (pk *PkgDesc) renameFunc(args *TypeArgs, inCtor bool) pri.RenameFunc {
+
+	stringer := astStringer{}
 	return func(id *ast.Ident) string {
 		n := id.Name
 		if pk.occTypes.Has(id) {
@@ -78,6 +80,10 @@ func (pk *PkgDesc) renameFunc(args *TypeArgs, inCtor bool) pri.RenameFunc {
 			} else {
 				return n
 			}
+		}
+		if pk.occConsts.Has(id) {
+			v := pk.consts[n]
+			return stringer.ToString(v)
 		}
 		if inCtor {
 			if pk.occCtors.Has(id) {

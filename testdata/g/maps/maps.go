@@ -1,4 +1,9 @@
+// nolint
 package maps
+
+import (
+	"fmt"
+)
 
 type K = interface{}
 type V = interface{}
@@ -16,6 +21,9 @@ func (m Map) KeyValues(keys *[]K, values *[]V) {
 	}
 }
 
+const helloWorld uint32 = 20
+const helloWorld1 string = "a"
+
 type TreeMap struct {
 	l   *Node
 	r   *Node
@@ -31,13 +39,15 @@ func create(keys []K, values []V) *TreeMap {
 }
 
 func (t *TreeMap) Put(k K, v V) {
-
+	fmt.Printf("%v %s", helloWorld, helloWorld1)
 }
+
+const maxW = 99
 
 func makeWrappers() []*wrapper {
 	return nil
 }
 
-func makeWrappers99() []**[99]*[]wrapper {
+func makeWrappers99() []**[maxW]*[]wrapper {
 	return nil
 }

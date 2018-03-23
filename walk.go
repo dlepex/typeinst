@@ -31,9 +31,11 @@ type (
 		funcs     map[string]*ast.FuncDecl // free standing funcs (i.e. no recever), excluding type ctors
 		impRename map[string]string        // what packages should be renamed within pkg AST: name -> newname
 		strict    bool                     // strict mode means all typevars of the pkg are markerd with special comment "//typeinst: typevar"
+		consts    map[string]ast.Expr      // const -> value
 		occTypes  AstIdentSet              // occurences of types identifiers in AST (that may be renamed)
-		occPkgs   AstIdentSet              // occurences of packages identifiers in AST (that must be renamed)
-		occCtors  AstIdentSet              // occurences of constructor functions ...
+		occPkgs   AstIdentSet              // ... of packages identifiers ...
+		occCtors  AstIdentSet              // ... of constructor functions ...
+		occConsts AstIdentSet              // ... of constants ...
 	}
 
 	// TypeDesc provides full type info
@@ -137,6 +139,7 @@ func (impl *Impl) Package(pkgPath string, imports Imports) (pkg *PkgDesc, err er
 	funcs := make(map[string]*ast.FuncDecl)
 	tpvars := NewStrSet()
 	fset := token.NewFileSet()
+	consts := make(map[string]ast.Expr)
 	pkgpath := packagePath(unquote(pkgPath))
 	if pkgpath == "" {
 		return nil, fmt.Errorf("no such package: %s", pkgPath)
@@ -162,7 +165,8 @@ func (impl *Impl) Package(pkgPath string, imports Imports) (pkg *PkgDesc, err er
 						funcs[decl.Name.Name] = decl
 					}
 				case *ast.GenDecl:
-					if decl.Tok == token.TYPE {
+					switch decl.Tok {
+					case token.TYPE:
 						for _, spec := range decl.Specs {
 							tsp := spec.(*ast.TypeSpec)
 							name := tsp.Name.Name
@@ -179,6 +183,27 @@ func (impl *Impl) Package(pkgPath string, imports Imports) (pkg *PkgDesc, err er
 								}
 							}
 						}
+					case token.CONST:
+						for _, spec := range decl.Specs {
+							spec := spec.(*ast.ValueSpec)
+							t := spec.Type
+							if t != nil {
+								if i := t.(*ast.Ident); i.Name == "string" {
+									t = nil
+								}
+							}
+							for i, id := range spec.Names {
+								val := spec.Values[i]
+								if t != nil {
+									// typed constant case: type(const)
+									val = &ast.CallExpr{
+										Fun:  t,
+										Args: []ast.Expr{val},
+									}
+								}
+								consts[id.Name] = val
+							}
+						}
 					}
 				}
 			}
@@ -191,8 +216,8 @@ func (impl *Impl) Package(pkgPath string, imports Imports) (pkg *PkgDesc, err er
 		impRename = impl.imports.Merge(imports)
 	}
 
-	pkg = &PkgDesc{pkgPath, types, make(map[string]*TypeDesc), tpvars, NewStrSet(), funcs, impRename, len(tpvars) > 0,
-		NewAstIdentSet(), NewAstIdentSet(), NewAstIdentSet()}
+	pkg = &PkgDesc{pkgPath, types, make(map[string]*TypeDesc), tpvars, NewStrSet(), funcs, impRename, len(tpvars) > 0, consts,
+		NewAstIdentSet(), NewAstIdentSet(), NewAstIdentSet(), NewAstIdentSet()}
 	pkg.detectCtors()
 	impl.pkg[pkgPath] = pkg
 	return
@@ -416,15 +441,23 @@ func (pd *PkgDesc) markOccurences(p astWalkerParams) {
 	if p.kind == ast.Typ || p.kind == ast.Bad {
 		if pd.generic.Has(n) || pd.typevars.Has(n) {
 			pd.occTypes.Add(p.id)
+			return
 		}
-	} else if p.kind == ast.Fun || p.kind == ast.Bad {
+	}
+	if p.kind == ast.Con || p.kind == ast.Bad {
+		if _, has := pd.consts[n]; has {
+			pd.occConsts.Add(p.id)
+			return
+		}
+	}
+	if p.kind == ast.Fun || p.kind == ast.Bad {
 		if _, has := pd.ctors[n]; has {
 			pd.occCtors.Add(p.id)
+			return
 		}
-	} else {
-		if _, has := pd.impRename[n]; has {
-			pd.occPkgs.Add(p.id)
-		}
+	}
+	if _, has := pd.impRename[n]; has {
+		pd.occPkgs.Add(p.id)
 	}
 }
 
@@ -474,7 +507,7 @@ func (w astWalker) Visit(node ast.Node) ast.Visitor {
 			w(astWalkerParams{node, ast.Bad})
 		} else {
 			switch node.Obj.Kind {
-			case ast.Typ, ast.Fun:
+			case ast.Typ, ast.Fun, ast.Con:
 				w(astWalkerParams{node, node.Obj.Kind})
 			}
 		}

@@ -100,7 +100,9 @@ __Generic packages cannot contain non-generic code__, move it to separate non-ge
 Non-generic code includes:
 - functions (w/o receiver), excluding constructors of generic types 
 - non-generic types and their methods
-- var and const declarations
+- var declarations 
+
+Const declarations are allowed in generic packages. Typeinst directly substitutes constants by their values.
 
 Generic package may import other packages. However, imported packages are never treated as generic themselves.
 
