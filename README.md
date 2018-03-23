@@ -136,7 +136,8 @@ type _typeinst struct {
 #### Empty singleton generic types
 
 ESGT are declared as empty structs and serve as dummy receivers for their methods, and thus
-they can be used for generic function imitation. (Typeinst is type-based and it is impossible to create generic functions directly)
+they can be used for generic function imitation. Typeinst is type-based and it is impossible to create generic functions directly.
+
 Here is an example:
 ```go
 type E interface{} // E is a type var
