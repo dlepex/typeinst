@@ -16,7 +16,6 @@ type (
 	Impl struct {
 		pkg        map[string]*PkgDesc
 		imports    Imports
-		instNames  StrSet
 		pkgName    string // generated package name
 		outputFile string // generated file name
 	}
@@ -25,12 +24,12 @@ type (
 	PkgDesc struct {
 		name      string
 		types     map[string]*TypeDesc     // all package types by name
-		ctors     map[string]*TypeDesc     // ctor name to type (it belongs)
-		typevars  StrSet                   // set of types (their names) that used as type variables
+		ctors     map[string]*TypeDesc     // ctor name -> type (it belongs)
+		typevars  StrSet                   // set of type variables
 		generic   StrSet                   // set of generic types
 		funcs     map[string]*ast.FuncDecl // free standing funcs (i.e. no recever), excluding type ctors
-		impRename map[string]string        // what packages should be renamed within pkg AST: name -> newname
-		strict    bool                     // strict mode means all typevars of the pkg are markerd with special comment "//typeinst: typevar"
+		impRename map[string]string        // what imports should be renamed within pkg AST: name -> newname
+		isStrict  bool                     // strict mode means all typevars of the pkg are markerd with special comment "//typeinst: typevar"
 		consts    map[string]ast.Expr      // const -> value
 		occTypes  AstIdentSet              // occurences of types identifiers in AST (that may be renamed)
 		occPkgs   AstIdentSet              // ... of packages identifiers ...
@@ -40,29 +39,27 @@ type (
 
 	// TypeDesc provides full type info
 	TypeDesc struct {
-		spec      *ast.TypeSpec
-		methods   []*ast.FuncDecl
-		ctors     []*ast.FuncDecl      // constructor functions
-		inst      map[*TypeArgs]string // typeargs -> instname; (map nonempty only for generic types)
-		typevars  StrSet               // set is populated typevars upon which this generic type depends
-		typevar   bool                 // does this type serves as a typevar?
-		visited   bool                 // was this type ever visited from any "root" generic type (root is what passed to Inst() func)
-		singleton bool                 // was type declared as empty struct?
+		spec        *ast.TypeSpec
+		methods     []*ast.FuncDecl
+		ctors       []*ast.FuncDecl      // constructor functions
+		inst        map[*TypeArgs]string // typeargs -> instname; (map nonempty only for generic types)
+		typevars    StrSet               // set is populated by typevars upon which this generic type depends
+		isTypevar   bool                 // does this type serves as a typevar?
+		isVisited   bool                 // was this type ever visited from any "root" generic type
+		isSingleton bool                 // was type declared as empty struct (ESGT)?
 	}
 )
 
 func newImpl(outputFile, pkgName string) *Impl {
 	return &Impl{
 		pkg:        make(map[string]*PkgDesc),
-		imports:    Imports{},
-		instNames:  NewStrSet(),
 		outputFile: outputFile,
 		pkgName:    pkgName,
 	}
 }
 
 func (td *TypeDesc) String() string {
-	return fmt.Sprintf("{fn: %v, cc: %v, t: %v}", td.methods, td.ctors, td.typevar)
+	return fmt.Sprintf("{fn: %v, cc: %v, t: %v}", td.methods, td.ctors, td.isTypevar)
 }
 
 func (td *TypeDesc) name() string {
@@ -70,14 +67,14 @@ func (td *TypeDesc) name() string {
 }
 
 func (td *TypeDesc) addFunc(f *ast.FuncDecl) {
-	if td.typevar {
+	if td.isTypevar {
 		bpan.Panicf("Typevar %s can't be func receiver: %s", td.name(), f.Name.Name)
 	}
 	td.methods = append(td.methods, f)
 }
 
 func (td *TypeDesc) addCtor(f *ast.FuncDecl) {
-	if td.typevar {
+	if td.isTypevar {
 		bpan.Panicf("Typevar %s can't have constructors: %s", td.name(), f.Name.Name)
 	}
 	td.ctors = append(td.ctors, f)
@@ -172,11 +169,11 @@ func (impl *Impl) Package(pkgPath string, imports Imports) (pkg *PkgDesc, err er
 							name := tsp.Name.Name
 							tdef := types.get(name)
 							tdef.spec = tsp
-							tdef.singleton = isSingleton(tsp)
+							tdef.isSingleton = isSingleton(tsp)
 							if tsp.Comment != nil {
 								for _, c := range tsp.Comment.List {
 									if tdef.parseSpecialComment(c.Text) {
-										if tdef.typevar {
+										if tdef.isTypevar {
 											tpvars[name] = struct{}{}
 										}
 									}
@@ -290,7 +287,7 @@ func (td *TypeDesc) parseSpecialComment(text string) bool {
 			args = args[1:]
 			switch verb {
 			case "typevar":
-				td.typevar = true
+				td.isTypevar = true
 				return true
 			default:
 				log.Printf("ignoring illegal '%s'-comment unknown verb: %s", commentPrefix, verb)
@@ -327,7 +324,7 @@ func (pd *PkgDesc) Inst(typName, instName string, typeArgs map[string]string) er
 	}
 	for tv := range typeArgs {
 		if !pd.typevars.Has(tv) {
-			if pd.strict {
+			if pd.isStrict {
 				return fmt.Errorf("strict mode: type %s cannot be a typevar in package  %s", tv, pd.name)
 			}
 			t, ok := pd.types[tv]
@@ -338,7 +335,7 @@ func (pd *PkgDesc) Inst(typName, instName string, typeArgs map[string]string) er
 				return fmt.Errorf("type %s cannot be a typevar in package  %s", tv, pd.name)
 			}
 			pd.typevars.Add(tv)
-			t.typevar = true
+			t.isTypevar = true
 		}
 	}
 	b := TypeArgsOf(typeArgs)
@@ -359,7 +356,7 @@ func (pd *PkgDesc) resolveRecur(td, parent *TypeDesc, visited StrSet) {
 	if visited.Has(td.name()) {
 		return
 	}
-	td.visited = true
+	td.isVisited = true
 	visited.Add(td.name())
 	if parent == nil {
 		parent = td
@@ -371,7 +368,7 @@ func (pd *PkgDesc) resolveRecur(td, parent *TypeDesc, visited StrSet) {
 		tn := id.Name
 		if t, ok := pd.types[tn]; ok {
 			if t != td {
-				if t.typevar {
+				if t.isTypevar {
 					td.typevars.Add(tn)
 				} else {
 					depTypes.Add(tn)

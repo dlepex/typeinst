@@ -102,7 +102,7 @@ func xTestPkgInst(t *testing.T) {
 	t.Logf("IMPORTS %v", impl.imports.n2p)
 
 	for tn, tp := range pd.types {
-		if tp.visited {
+		if tp.isVisited {
 			t.Logf("TYPE: %s <tv: %v> -->> binds: %v, gen: %v,  ctors %v", tn, tp.typevars, tp.inst, tp.isGeneric(), tp.ctors)
 			//ast.Print(nil, tp.spec.Type)
 		}

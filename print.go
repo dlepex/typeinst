@@ -59,7 +59,7 @@ func (im *Impl) Print() (err error) {
 }
 
 func (td *TypeDesc) printedName(n string) string {
-	if !td.singleton {
+	if !td.isSingleton {
 		return n
 	}
 	// for singleton types their name is used for var-declaration
@@ -73,7 +73,7 @@ func (pk *PkgDesc) renameFunc(args *TypeArgs, inCtor bool) pri.RenameFunc {
 		n := id.Name
 		if pk.occTypes.Has(id) {
 			t := pk.types[n]
-			if t.typevar {
+			if t.isTypevar {
 				return args.Binds[n]
 			} else if t.isGeneric() {
 				return t.printedName(t.inst[args])
@@ -103,7 +103,7 @@ func (td *TypeDesc) decl(instName string) []*ast.GenDecl {
 	gd := &ast.GenDecl{}
 	gd.Tok = token.TYPE
 	gd.Specs = []ast.Spec{td.spec}
-	if !td.singleton {
+	if !td.isSingleton {
 		return []*ast.GenDecl{gd}
 	}
 
@@ -126,7 +126,7 @@ func (td *TypeDesc) decl(instName string) []*ast.GenDecl {
 
 func (pk *PkgDesc) print(wr *bufio.Writer, typedefs StrSet) {
 	for _, tp := range pk.types {
-		if !tp.visited {
+		if !tp.isVisited {
 			continue
 		}
 		if tp.isGeneric() {
