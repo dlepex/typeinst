@@ -37,7 +37,7 @@ Typeinst is to be used with `go generate`, it has no command line options: it us
 
 ## __Terminology__
 
-#### Type variable
+### __Type variable__
 
 Type variables (type-parameters of generic types) are declared within generic package, usually as an empty interface:
 ```go
