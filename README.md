@@ -58,7 +58,7 @@ This comment provides error message, in case a user of your generic package omit
 
 Please note that, if the "typevar"-comment was used for one type variable, it MUST be used for the rest of them (in the same generic package).
 
-#### Generic type
+### __Generic type__
 
 A type is considered generic if it [depends on](#type-dependency-relation) at least one type variable.
 
@@ -75,7 +75,7 @@ For instance, hypothetical root type `AVLTree` depends on non-root type `AVLTree
 
 If you do not like the implicit ("mangled") names of non-root types, you can always name them on your own by making them root, i.e. by adding their explicit instantiation to DSL-struct.
 
-#### Constructor function
+### __Constructor function__
 
 Constructor function of generic type `G` is a function that returns:
 - `G`, `*G`, `[]G`, `[n]G`
@@ -85,7 +85,7 @@ Constructor function of generic type `G` is a function that returns:
 
 Constructor functions usually have names started with `New`, but this is not enforced.
 
-#### Type dependency relation
+### __Type dependency relation__
 
 Type A directly _depends on_ type B if type B occurs in:
 - type A declaration
@@ -93,11 +93,11 @@ Type A directly _depends on_ type B if type B occurs in:
 
 Type dependency is a transitive, non-symmetric relation.
 
-#### Generic package
+### __Generic package__
 
-*Generic package* contains *generic types* and their *type variables*. 
+*Generic package* contains [generic types](#generic-type) and their [type variables](#type-variable)
 
-__Generic packages cannot contain non-generic code__, move it to separate non-generic package if needed.
+Generic packages **cannot contain non-generic code**, move it to separate non-generic package if needed.
 
 Non-generic code includes:
 - functions (w/o receiver), excluding constructors of generic types 
@@ -106,9 +106,9 @@ Non-generic code includes:
 
 Const declarations are allowed in generic packages. Typeinst directly substitutes constants by their values.
 
-Generic package may import other packages. However, imported packages are never treated as generic themselves.
+Generic package may import other packages. Imported packages are never treated as generic themselves, i.e. a generic type from one package cannot depend on a generic type from another package. 
 
-#### Type merging
+### __Type merging__
 
 Type merging allows an instantiated type to be assembled from multiple orthogonal behavioral parts (or in other words: non-intersecting method sets).
 
@@ -133,7 +133,7 @@ type _typeinst struct {
 ```
 `IntSlice` will contain both filtering and aggregation methods.
 
-#### Empty singleton generic types
+### __Empty singleton generic types__
 
 ESGT are declared as empty structs and serve as dummy receivers for their methods, and thus
 they can be used for generic function imitation. Typeinst is type-based and it is impossible to create generic functions directly.
@@ -168,7 +168,7 @@ As a side note, since ESGT are just named empty structs, they are potentially [t
 3. Functions w/o receiver (except constructors) cannot be generic [solution: [ESGT](#empty-singleton-generic-types)]
 4. [Read generic package section](#generic-package)
 5. Not all errors are checked during code generation, some of them will potentially result in uncompilable code: 
-	- non generic code in generic package
+	- non-generic code in generic package
 	- merging unmergeable types
 	- identifier name clashes or shadowing
 1. It is worth to remember that Typeinst is a code generator and not a typechecker, and that in many cases `interface{}` is ok.
