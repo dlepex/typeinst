@@ -100,10 +100,8 @@ func (pk *PkgDesc) renameFunc(args *TypeArgs, inCtor bool) pri.RenameFunc {
 }
 
 func (td *TypeDesc) decl(instName string) []*ast.GenDecl {
-
 	gd := &ast.GenDecl{}
 	gd.Tok = token.TYPE
-	// todo rename type in spec
 	gd.Specs = []ast.Spec{td.spec}
 	if !td.singleton {
 		return []*ast.GenDecl{gd}

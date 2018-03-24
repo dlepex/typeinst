@@ -8,10 +8,7 @@ import (
 	"strings"
 )
 
-//TODO DependentTypeName
-
-// generated file suffix
-const fileSuffix = "_ti"
+const fileSuffix = "_ti" // generated file suffix
 
 func main() {
 	gofile := os.Getenv("GOFILE")
@@ -19,8 +16,7 @@ func main() {
 	fatalIfErr(Run(gofile))
 }
 
-// Run - runs tool on a file
-// added for more convenient testing
+// Run - convenience func for tests.
 func Run(gofile string) (err error) {
 	defer bpan.RecoverTo(&err)
 	implFile := implFilename(gofile, fileSuffix)
