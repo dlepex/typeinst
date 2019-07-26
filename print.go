@@ -130,12 +130,15 @@ func (pk *PkgDesc) print(wr *bufio.Writer, typedefs StrSet) {
 			continue
 		}
 		if tp.isGeneric() {
+			isFunc := tp.isSingleFunc()
 			for typeArgs, instName := range tp.inst {
 				p := newAstPrinter(wr, pk.renameFunc(typeArgs, false))
 				if !typedefs.Has(instName) {
 					// instName is printed once (this is how "merged" types work)
-					for _, d := range tp.decl(instName) {
-						p.println(d)
+					if !isFunc {
+						for _, d := range tp.decl(instName) {
+							p.println(d)
+						}
 					}
 					typedefs.Add(instName)
 				}
@@ -146,6 +149,10 @@ func (pk *PkgDesc) print(wr *bufio.Writer, typedefs StrSet) {
 					}
 				}
 				for _, f := range tp.methods {
+					if isFunc {
+						f.Recv = nil
+						f.Name = &ast.Ident{Name: instName}
+					}
 					p.println(f)
 				}
 			}

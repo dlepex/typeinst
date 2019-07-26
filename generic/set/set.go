@@ -17,3 +17,12 @@ func (set Set) Has(elem E) bool {
 	_, has := set[elem]
 	return has
 }
+
+type SetToSlice struct{}
+
+func (_ SetToSlice) F(set Set, slice []E) []E {
+	for e, _ := range set {
+		slice = append(slice, e)
+	}
+	return slice
+}

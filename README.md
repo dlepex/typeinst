@@ -12,7 +12,7 @@ type _typeinst struct {
 	IntTreeSet	func(K int, V struct{}) redblack.TreeMap
 	FloatTreeMap	func(K float64, V float64) redblack.TreeMap
 	StrSet		func(E string)  std.Set
-} 
+}
 ```
 Each field of DSL-struct defines the single concrete type.
 
@@ -22,7 +22,7 @@ For each field *DSL-func* describes the substitution of type variables and the r
 
 Typeinst is to be used with `go generate`, it has no command line options: it uses DSL-struct as its sole "option".
 
-1. Install the tool first: `go install github.com/dlepex/typeinst`
+1. Install the tool first: `go get github.com/dlepex/typeinst`
 1. Declare DSL-struct in some file of your package, together with go-generate comment, as in the example above.
 	* The DSL-struct name must start with `_typeinst` prefix, it is strongly recommended to have one DSL-struct per package, and to declare it in a separate file.
 1. Run `go generate` on your package.
@@ -63,14 +63,14 @@ Please note that, if the "typevar"-comment was used for one type variable, it MU
 A type is considered generic if it [depends on](#type-dependency-relation) at least one type variable.
 
 Generic type `G` consists of:
-- type declaration 
+- type declaration
 - methods (functions with receiver `G` or `*G`)
 - [constructor functions](#constructor-function)
 
 
 *Root generic types* are the types that are explicitly instantiated (i.e. the results of DSL-funcs)
 
-Root types may [depend on](#type-dependency-relation) *non-root generic types*, non-root types are implicitly instantiated and implicitly named. 
+Root types may [depend on](#type-dependency-relation) *non-root generic types*, non-root types are implicitly instantiated and implicitly named.
 For instance, hypothetical root type `AVLTree` depends on non-root type `AVLTreeNode`.
 
 If you do not like the implicit ("mangled") names of non-root types, you can always name them on your own by making them root, i.e. by adding their explicit instantiation to DSL-struct.
@@ -100,13 +100,13 @@ Type dependency is a transitive, non-symmetric relation.
 Generic packages **cannot contain non-generic code**, move it to separate non-generic package if needed.
 
 Non-generic code includes:
-- functions (w/o receiver), excluding constructors of generic types 
+- functions (w/o receiver), excluding constructors of generic types
 - non-generic types and their methods
-- var declarations 
+- var declarations
 
 Const declarations are allowed in generic packages. Typeinst directly substitutes constants by their values.
 
-Generic package may import other packages. Imported packages are never treated as generic themselves, i.e. a generic type from one package cannot depend on a generic type from another package. 
+Generic package may import other packages. Imported packages are never treated as generic themselves, i.e. a generic type from one package cannot depend on a generic type from another package.
 
 ### __Type merging__
 
@@ -115,7 +115,7 @@ Type merging allows an instantiated type to be assembled from multiple orthogona
 "Behavioral parts" must have the same declared type after the substitution of type variables.
 
 ```go
-type T = interface{} 
+type T = interface{}
 type SliceF T[] // this type has filtering methods
 func (a SliceF) Filter(...) ... {...}
 
@@ -129,7 +129,7 @@ The merged type `IntSlice` based on this 2 types may be created using multiple r
 //go:generate typeinst
 type _typeinst struct {
 	IntSlice	func(T int) (somepkg.SliceA, somepkg.SliceF)
-} 
+}
 ```
 `IntSlice` will contain both filtering and aggregation methods.
 
@@ -151,7 +151,7 @@ func (_ ChanMerge) Merge(cs ...<-chan E) <-chan E {...}
 //go:generate typeinst
 type _typeinst struct {
 	intChannels	func(E int) (somepkg.ChanMerge)
-} 
+}
 ```
 In this example Typeinst will generate _intChannels var_ and  _intChannelsType type_.
 
@@ -160,14 +160,14 @@ As a side note, since ESGT are just named empty structs, they are potentially [t
 ## __Limitations__
 
 1. Imports in generic packages:
-	- must have consistent import names across all files of the same generic package 
+	- must have consistent import names across all files of the same generic package
 	- dot `.` import is not allowed
 2. Type variables cannot be substituted by:
 	- "anonymous" non-empty struct [solution: use named types or type alias]
 	- "anonymous" non-empty interface [solution: the same]
 3. Functions w/o receiver (except constructors) cannot be generic [solution: [ESGT](#empty-singleton-generic-types)]
 4. [Read generic package section](#generic-package)
-5. Not all errors are checked during code generation, some of them will potentially result in uncompilable code: 
+5. Not all errors are checked during code generation, some of them will potentially result in uncompilable code:
 	- non-generic code in generic package
 	- merging unmergeable types
 	- identifier name clashes or shadowing
@@ -182,7 +182,3 @@ As a side note, since ESGT are just named empty structs, they are potentially [t
 
 - [ ] alternative dsl form: func(tv1-type, tv1-value, tv2-type, tv2-value,...)
 - [ ] more tests & travis cfg
-
-
-
-

@@ -92,6 +92,10 @@ func (td *TypeDesc) canBeTypevar() bool {
 
 func (td *TypeDesc) isGeneric() bool { return len(td.typevars) != 0 }
 
+func (td *TypeDesc) isSingleFunc() bool {
+	return td.isSingleton && len(td.methods) == 1
+}
+
 func isSingleton(spec *ast.TypeSpec) bool {
 	switch t := spec.Type.(type) {
 	case *ast.StructType:
