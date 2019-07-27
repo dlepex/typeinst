@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -89,8 +91,31 @@ func unquote(s string) string {
 }
 
 func packagePath(pkg string) string {
+	cmd := exec.Command("go", "list", "-m", "all")
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		//no go modules:
+		return packagePathGopath(pkg, "src")
+	}
+	sc := bufio.NewScanner(bytes.NewReader(b))
+	for sc.Scan() {
+		sp := strings.Split(sc.Text(), " ")
+		mod, ver := sp[0], ""
+		if len(sp) == 2 {
+			ver = sp[1]
+		}
+		if strings.HasPrefix(pkg, mod) {
+			suffix := pkg[len(mod):]
+			full := mod + "@" + ver + suffix
+			return packagePathGopath(full, "pkg/mod")
+		}
+	}
+	return ""
+}
+
+func packagePathGopath(pkg string, subdir string) string {
 	for _, dir := range filepath.SplitList(os.Getenv("GOPATH")) {
-		fullPath := filepath.Join(dir, "src", pkg)
+		fullPath := filepath.Join(dir, subdir, pkg)
 		if pathExists(fullPath) {
 			return fullPath
 		}

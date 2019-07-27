@@ -28,3 +28,4 @@ _testmain.go
 *.log
 testdata/**/*_ti.go
 .vscode/
+.DS_Store
