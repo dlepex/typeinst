@@ -4,14 +4,17 @@ Typeinst is a tool to automate the creation of concrete types ("type instances")
 Typeinst uses the special fake struct declaration (DSL-struct, for brevity)  as the description of what types should be generated:
 ```go
 import (
-	"some-fictional-generic-package1/redblack"
-	"some-fictional-generic-package2/std"
+  "github.com/dlepex/genericlib/set"
+	"github.com/dlepex/genericlib/slice"
+	"some/thirparty/generic/package/redblack"
 )
 //go:generate typeinst
 type _typeinst struct {
+  StrSet		func(E string)  set.Set
+  floats    func(E float64) slice.Ops
 	IntTreeSet	func(K int, V struct{}) redblack.TreeMap
 	FloatTreeMap	func(K float64, V float64) redblack.TreeMap
-	StrSet		func(E string)  std.Set
+
 }
 ```
 Each field of DSL-struct defines the single concrete type.
@@ -27,6 +30,8 @@ Typeinst is to be used with `go generate`, it has no command line options: it us
 	* The DSL-struct name must start with `_typeinst` prefix, it is strongly recommended to have one DSL-struct per package, and to declare it in a separate file.
 1. Run `go generate` on your package.
 1. The result is `<file>_ti.go`, where `<file>` is a name of the file where DSL-struct is declared. The file is generated in the same package and it contains ALL concrete types described by DSL-struct.
+1. This repo https://github.com/dlepex/genericlib contains some usefull generic types e.g. generic slice ops and generic set
+
 
 ## __Features__
 - __Selective type instantiation__: Typeinst only generates the requested types, not the whole generic package at once: this tool is type-based, not package-based.
@@ -177,8 +182,3 @@ As a side note, since ESGT are just named empty structs, they are potentially [t
 
 - AST rewriting is not used. Identifier substitution happens simultaneously with printing AST to file. For that purpose, the standard "go/printer" package was slightly modified: extra field `RenameFunc` was added to the `Config` struct.
 - Typeinst has been used to generate a part of itself: [gentypes.go](https://github.com/dlepex/typeinst/blob/master/gentypes.go)
-
-## todo
-
-- [ ] alternative dsl form: func(tv1-type, tv1-value, tv2-type, tv2-value,...)
-- [ ] more tests & travis cfg
