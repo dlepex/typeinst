@@ -12,7 +12,7 @@ import (
 //go:generate typeinst
 type _typeinst struct {
   StrSet        func(E string)  set.Set
-  ints          func(E int)     slice.Ops
+  ints          func(E int)     (slice.Basic, slice.Pred)
   FloatTreeMap  func(K float64, V float64) redblack.TreeMap
 }
 
