@@ -3,19 +3,19 @@ Typeinst is a tool to automate the creation of concrete types ("type instances")
 
 Typeinst uses the special fake struct declaration (DSL-struct, for brevity)  as the description of what types should be generated:
 ```go
+
 import (
   "github.com/dlepex/genericlib/set"
-	"github.com/dlepex/genericlib/slice"
-	"some/thirparty/generic/package/redblack"
+  "github.com/dlepex/genericlib/slice"
+  "some/thirparty/generic/package/redblack"
 )
 //go:generate typeinst
 type _typeinst struct {
-  StrSet		func(E string)  set.Set
-  floats    func(E float64) slice.Ops
-	IntTreeSet	func(K int, V struct{}) redblack.TreeMap
+  StrSet		    func(E string)  set.Set
+  ints          func(E int)     slice.Ops
 	FloatTreeMap	func(K float64, V float64) redblack.TreeMap
-
 }
+
 ```
 Each field of DSL-struct defines the single concrete type.
 
