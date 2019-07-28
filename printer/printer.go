@@ -740,8 +740,8 @@ func (p *printer) intersperseComments(next token.Position, tok token.Token) (wro
 	var last *ast.Comment
 	for p.commentBefore(next) {
 		for _, c := range p.comment.List {
-			p.writeCommentPrefix(p.posFor(c.Pos()), next, last, tok)
-			p.writeComment(c)
+			// Skipping_comments:  p.writeCommentPrefix(p.posFor(c.Pos()), next, last, tok)
+			// Skipping_comments:  p.writeComment(c)
 			last = c
 		}
 		p.nextComment()
