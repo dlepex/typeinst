@@ -11,9 +11,9 @@ import (
 )
 //go:generate typeinst
 type _typeinst struct {
-  StrSet		    func(E string)  set.Set
+  StrSet        func(E string)  set.Set
   ints          func(E int)     slice.Ops
-	FloatTreeMap	func(K float64, V float64) redblack.TreeMap
+  FloatTreeMap  func(K float64, V float64) redblack.TreeMap
 }
 
 ```
