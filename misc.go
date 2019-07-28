@@ -12,7 +12,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/dlepex/typeinst/pan"
+	"github.com/dlepex/typeinst/internal/pan"
 )
 
 var bpan = pan.NewBounded()

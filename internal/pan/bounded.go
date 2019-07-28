@@ -1,4 +1,3 @@
-// Package pan - le terme panique est une référence au dieu Pan en mythologie grecque
 package pan
 
 import (

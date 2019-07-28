@@ -93,7 +93,7 @@ func ParseDSL(filename, structName string) (dsl *DSL, err error) {
 				bpan.Panicf(estr("generic type cannot be local, it must be imported from another package"))
 			}
 			qt := pair.qualifiedType()
-			if qtset.Has(qt) {
+			if qtset.Contains(qt) {
 				bpan.Panicf(estr("merging repeated generic type: %v"), qt)
 			}
 			qtset.Add(qt)

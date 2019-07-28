@@ -3,7 +3,7 @@ package main
 import (
 	"go/ast"
 
-	"github.com/dlepex/typeinst/generic/set"
+	"github.com/dlepex/genericlib/set"
 )
 
 //go:generate typeinst

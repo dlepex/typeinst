@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	prn "github.com/dlepex/typeinst/printer"
+	prn "github.com/dlepex/typeinst/internal/printer"
 )
 
 // This file contains no real test, just various experiments (which should pass nicely)

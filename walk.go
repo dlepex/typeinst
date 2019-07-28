@@ -327,7 +327,7 @@ func (pd *PkgDesc) Inst(typName, instName string, typeArgs map[string]string) er
 		return fmt.Errorf("Type %s not found in package %s", typName, pd.name)
 	}
 	for tv := range typeArgs {
-		if !pd.typevars.Has(tv) {
+		if !pd.typevars.Contains(tv) {
 			if pd.isStrict {
 				return fmt.Errorf("strict mode: type %s cannot be a typevar in package  %s", tv, pd.name)
 			}
@@ -357,7 +357,7 @@ func (pd *PkgDesc) Inst(typName, instName string, typeArgs map[string]string) er
 }
 
 func (pd *PkgDesc) resolveRecur(td, parent *TypeDesc, visited StrSet) {
-	if visited.Has(td.name()) {
+	if visited.Contains(td.name()) {
 		return
 	}
 	td.isVisited = true
@@ -440,7 +440,7 @@ func (pd *PkgDesc) markOccurences(p astWalkerParams) {
 	n := p.id.Name
 
 	if p.kind == ast.Typ || p.kind == ast.Bad {
-		if pd.generic.Has(n) || pd.typevars.Has(n) {
+		if pd.generic.Contains(n) || pd.typevars.Contains(n) {
 			pd.occTypes.Add(p.id)
 			return
 		}
