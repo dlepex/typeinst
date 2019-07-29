@@ -93,7 +93,7 @@ func (td *TypeDesc) canBeTypevar() bool {
 func (td *TypeDesc) isGeneric() bool { return len(td.typevars) != 0 }
 
 func (td *TypeDesc) isSingleFunc() bool {
-	return td.isSingleton && len(td.methods) == 1
+	return td.isSingleton && len(td.methods) == 1 && td.methods[0].Name.Name == "Apply"
 }
 
 func isSingleton(spec *ast.TypeSpec) bool {

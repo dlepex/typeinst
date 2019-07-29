@@ -138,7 +138,7 @@ type _typeinst struct {
 ```
 `IntSlice` will contain both filtering and aggregation methods.
 
-### __Empty singleton generic types__
+### __Empty singleton generic types and generic functions__
 
 ESGT are declared as empty structs and serve as dummy receivers for their methods, and thus
 they can be used for generic function imitation. Typeinst is type-based and it is impossible to create generic functions directly.
@@ -148,17 +148,17 @@ Here is an example:
 type E interface{} // E is a type var
 type ChanMerge struct{} // ESGT which depends on E through its method Merge i.e. this type is generic
 
-func (_ ChanMerge) Merge(cs ...<-chan E) <-chan E {...}
+func (ChanMerge) Apply(cs ...<-chan E) <-chan E {...}
 ```
-**For ESGT Typeinst will not only generate a type-declaration, but also a var-declaration**
-
+**For ESGT Typeinst will not only generate a type-declaration, but also a var-declaration.**
+If ESGT contains just a single method named ```Apply``` Typeinst will generate a function declaration instead.
 ```go
 //go:generate typeinst
 type _typeinst struct {
-	intChannels	func(E int) (somepkg.ChanMerge)
+	intChanMerge	func(E int) (somepkg.ChanMerge)
 }
 ```
-In this example Typeinst will generate _intChannels var_ and  _intChannelsType type_.
+In this example Typeinst will generate ```func intChanMerge(cs ...<-chan int) <-chan int {...} ```.
 
 As a side note, since ESGT are just named empty structs, they are potentially [type-mergeable](#type-merging).
 
